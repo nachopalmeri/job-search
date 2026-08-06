@@ -1,0 +1,56 @@
+# Email B — IBM · "Pasantía en Desarrollo de Software" (CABA, 20 hs)
+
+IBM NO acepta postulación por email: la aplicación es por el portal. Este archivo
+contiene (1) cómo postularse exactamente en el portal, y (2) un email genérico en
+caso de que el formulario pida carta de presentación o quieras contactar a un
+reclutador por LinkedIn.
+
+---
+
+## 1) Cómo postularse (portal, no email)
+
+1. Crear perfil y aplicar en **careers.ibm.com** buscando la Req **127046** — "Pasantía en Desarrollo de Software" (IBM Consulting, retail/banca, CABA, 20 hs semanales).
+   - Programa global de pasantías de IBM en Argentina: **Blue Journey**.
+2. Adjuntar el **PDF** (`Ignacio_Palmeri_CV_EN.pdf` o el ES) + completar los campos del formulario.
+3. Aplicar temprano: es **rolling**, IBM llena cupos mientras encuentra candidatos.
+4. Esperar el assessment **HackerRank** (suele llegar en 1–7 días; 2 problemas, foco en arrays y strings, con crédito parcial). Preparar también: pantalla con reclutador (20–30 min) + entrevista técnica live coding nivel fácil/medio + entrevista comportamental (método STAR).
+5. Keywords que escanea el ATS de IBM: `Python`, `watsonx`, `IA generativa`, `agile`, `alumno regular`, `UADE`.
+
+URL alternativa al aviso: https://www.iagora.com/work/es/oferta/practicas-argentina-informatica/6310085
+
+---
+
+## 2) Carta de presentación (para el formulario o contacto por LinkedIn)
+
+**Asunto (si se manda por email/inmail):**
+```
+Postulación — Pasantía en Desarrollo de Software (Ref. 127046) — Ignacio Palmeri
+```
+
+**Cuerpo:**
+
+Hola, equipo de Talento de IBM:
+
+Mi nombre es Ignacio Palmeri, tengo 19 años y curso el 4.º cuatrimestre de la
+Licenciatura en Gestión de TI en UADE (alumno regular, cursada presencial por la
+noche, disponible part-time 20 hs semanales en turno mañana o tarde).
+
+Me postulo a la Pasantía en Desarrollo de Software publicada en IBM Careers
+(Ref. 127046, CABA, 20 hs semanales). Tengo Python a nivel básico/intermedio, vengo
+explorando IA generativa por mi cuenta (proyectos con LLMs: un bot de Telegram que
+resume ofertas laborales, un motor de predicción con simulaciones Monte Carlo) y me
+interesa especialmente la oportunidad de capacitarme en herramientas como watsonx
+Orchestrate durante la pasantía.
+
+Lo que más me atrae de IBM es el trabajo en equipos multidisciplinarios, la escala
+global y un programa con mentoría como Blue Journey.
+
+Adjunto mi CV. Quedo atento a los próximos pasos y disponible para entrevista.
+
+Muchas gracias y saludos cordiales,
+
+**Ignacio Palmeri**
+Teléfono: +54 9 11 5509-0832
+Email: ignaciopalmeri1@gmail.com
+LinkedIn: linkedin.com/in/ignaciopalmeri
+Portfolio: ignaciopalmeri.vercel.app

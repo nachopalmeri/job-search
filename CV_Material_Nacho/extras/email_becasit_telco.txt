@@ -1,0 +1,43 @@
+# Email C — iTechCareer / BecasIT · "Pasante Soporte Telecomunicaciones"
+
+**Para:** empleo@itechcareer.com (CC: empleoitc@gmail.com)
+**Adjunto:** Ignacio_Palmeri_CV_ES.pdf
+
+**Asunto (obligatorio, así lo pide el aviso):**
+```
+Ref: Pasante Soporte Telco — Ignacio Palmeri — Remuneración pretendida: $700.000
+```
+
+---
+**Cuerpo:**
+
+Hola, buen día:
+
+Mi nombre es Ignacio Palmeri, tengo 19 años y estoy cursando el 4.º cuatrimestre
+de la Licenciatura en Gestión de Tecnología de la Información en UADE (alumno
+regular, cursada presencial de lunes a viernes por la noche, con disponibilidad
+part-time de 20 hs semanales en turno mañana o tarde).
+
+Me postulo a la búsqueda de "Pasante Soporte Telecomunicaciones" (Ref: Pasante
+Soporte Telco). Actualmente curso CCNA 1 (fundamentos de redes, subnetting,
+direccionamiento IP y switches) y tengo manejo de línea de comandos en Linux,
+además de experiencia en atención al cliente y resolución de conflictos en
+atención al público. Estoy interesado en crecer en el área de redes y
+telecomunicaciones y tengo muchas ganas de aprender de un equipo técnico.
+
+Adjunto mi CV en PDF. Respecto a la remuneración pretendida, indico $700.000
+mensuales por la carga horaria de la pasantía.
+
+Quedo a disposición para coordinar una entrevista cuando les sea conveniente.
+
+Muchas gracias por su tiempo.
+Saludos cordiales,
+
+**Ignacio Palmeri**
+Teléfono: +54 9 11 5509-0832
+Email: ignaciopalmeri1@gmail.com
+LinkedIn: linkedin.com/in/ignaciopalmeri
+Portfolio: ignaciopalmeri.vercel.app
+
+---
+**Nota:** no mencionar DWDM/MPLS (no dominados). CCNA en curso = ventaja real. Ref exacta del aviso: `Pasante Soporte Telco`.

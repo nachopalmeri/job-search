@@ -1,4 +1,5 @@
 import argparse
+import json
 import re
 import sys
 import urllib.request
@@ -34,7 +35,8 @@ BECASIT_URL = "https://becasit.itechcareer.com/pasant%C3%ADas"
 EMPLEOSIT_RSS = "https://www.empleosit.com.ar/rss/"
 
 RADAR_DIR = Path(__file__).resolve().parent.parent / "radar"
-TSV_HEADER = "fecha|portal|titulo|empresa|ubicacion|modalidad|jornada|estado|url"
+SEEN_FILE = RADAR_DIR / "seen_jobs.json"
+TSV_HEADER = "fecha|portal|titulo|empresa|ubicacion|modalidad|jornada|estado|url|nuevo"
 
 UA = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
@@ -63,6 +65,26 @@ def _clean(text):
     return re.sub(r"\s+", " ", unescape(text)).strip()
 
 
+def _seen_key(job):
+    return job.get("url", "").strip().split("?")[0] or f"{job.get('portal','')}|{job.get('titulo','')}".lower()
+
+
+def _load_seen():
+    if not SEEN_FILE.exists():
+        return {}
+    try:
+        return json.loads(SEEN_FILE.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return {}
+
+
+def _save_seen(seen):
+    SEEN_FILE.write_text(
+        json.dumps(seen, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
 def _first(pattern, block):
     m = re.search(pattern, block, re.S)
     return _clean(m.group(1)) if m else ""
@@ -73,11 +95,11 @@ def _emit(portal, jobs, tsv_path=None):
         tsv_path.parent.mkdir(parents=True, exist_ok=True)
         with tsv_path.open("a", encoding="utf-8") as fh:
             for j in jobs:
-                row = [j.get(k, "") for k in ["fecha", "titulo", "empresa", "ubicacion", "modalidad", "jornada", "estado", "url"]]
+                row = [j.get(k, "") for k in ["fecha", "titulo", "empresa", "ubicacion", "modalidad", "jornada", "estado", "url", "nuevo"]]
                 row = [str(v).replace("|", "/") for v in row]
                 fh.write(f"{portal}|" + "|".join(row) + "\n")
     for j in jobs:
-        print(f"{portal} | {j['titulo']} | {j['empresa']} | {j['ubicacion']} | {j['fecha']} | {j['modalidad']} | {j['jornada']} | {j['estado']} | {j['url']}")
+        print(f"{portal} | {j['titulo']} | {j['empresa']} | {j['ubicacion']} | {j['fecha']} | {j['modalidad']} | {j['jornada']} | {j['estado']} | {j['url']} | {j.get('nuevo','')}")
 
 
 def scrape_linkedin(kw):
@@ -210,7 +232,8 @@ def main():
     ap.add_argument("--open", action="store_true", help="abrir links en el navegador")
     ap.add_argument("--scrape", choices=["linkedin", "startups", "computrabajo", "becasit", "empleosit", "all"], help="scrapeo de avisos")
     ap.add_argument("--kw", default="pasantia", help="keyword para el scrapeo (LinkedIn / Computrabajo)")
-    ap.add_argument("--write", action="store_true", help="guardar en radar/daily-YYYY-MM-DD.tsv")
+    ap.add_argument("--write", action="store_true", help="guardar en radar/daily-YYYY-MM-DD.tsv y actualizar seen_jobs.json")
+    ap.add_argument("--new", action="store_true", help="mostrar solo avisos no vistos antes (comparado contra seen_jobs.json)")
     args = ap.parse_args()
 
     if args.links or args.open:
@@ -225,6 +248,8 @@ def main():
 
     if args.scrape:
         tsv_path = None
+        seen = _load_seen() if (args.write or args.new) else {}
+        seen_today = {}
         if args.write:
             tsv_path = RADAR_DIR / f"daily-{date.today().isoformat()}.tsv"
             tsv_path.write_text(TSV_HEADER + "\n", encoding="utf-8")
@@ -232,17 +257,37 @@ def main():
         for name in selected:
             print(f"## {name.capitalize()}")
             if name == "linkedin":
-                _emit(name, scrape_linkedin(args.kw), tsv_path)
+                jobs = scrape_linkedin(args.kw)
             elif name == "startups":
-                _emit(name, scrape_startupsargentina(), tsv_path)
+                jobs = scrape_startupsargentina()
             elif name == "computrabajo":
-                _emit(name, scrape_computrabajo(args.kw), tsv_path)
+                jobs = scrape_computrabajo(args.kw)
             elif name == "becasit":
-                _emit(name, scrape_becasit(), tsv_path)
+                jobs = scrape_becasit()
             elif name == "empleosit":
-                _emit(name, scrape_empleosit(), tsv_path)
+                jobs = scrape_empleosit()
+            else:
+                jobs = []
+            if args.write or args.new:
+                seen_today[name] = []
+                for j in jobs:
+                    key = _seen_key(j)
+                    if key not in seen:
+                        j["nuevo"] = "NUEVO"
+                        seen[key] = date.today().isoformat()
+                        seen_today[name].append(j)
+                    else:
+                        j["nuevo"] = ""
+                if args.new:
+                    jobs = [j for j in jobs if j["nuevo"] == "NUEVO"]
+                    print(f"[--new] {name}: {len(jobs)} sin ver de {len(seen)} conocidos\n")
+            _emit(name, jobs, tsv_path)
         if args.write:
+            _save_seen(seen)
             print(f"\nTSV guardado en {tsv_path}")
+        if args.new:
+            total_new = sum(len(v) for v in seen_today.values())
+            print(f"\nNuevos totales: {total_new} (ya conocidos: {len(seen) - total_new})")
         return
 
     ap.print_help()

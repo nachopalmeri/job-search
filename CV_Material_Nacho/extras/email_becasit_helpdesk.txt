@@ -1,0 +1,44 @@
+# Email D — iTechCareer / BecasIT · "Pasante Soporte Help Desk"
+
+**Para:** empleo@itechcareer.com (CC: empleoitc@gmail.com)
+**Adjunto:** Ignacio_Palmeri_CV_ES.pdf
+
+**Asunto (obligatorio, así lo pide el aviso):**
+```
+Ref: pasante soporte — Ignacio Palmeri — Remuneración pretendida: $700.000
+```
+
+---
+**Cuerpo:**
+
+Hola, buen día:
+
+Mi nombre es Ignacio Palmeri, tengo 19 años y estoy cursando el 4.º cuatrimestre
+de la Licenciatura en Gestión de Tecnología de la Información en UADE (alumno
+regular, cursada presencial de lunes a viernes por la noche, con disponibilidad
+part-time de 20 hs semanales en turno mañana o tarde).
+
+Me postulo a la búsqueda de "Pasante Soporte Help Desk" (Ref: pasante soporte).
+Desde octubre de 2023 trabajo en atención al público en Grido: manejo de caja,
+inventario, sistema de facturación ERP y resolución de conflictos con clientes,
+lo que me dio trato directo con usuarios y tolerancia a la presión. Uso
+computadoras y software de forma cotidiana, manejo línea de comandos en Linux y
+tengo experiencia en documentación de procesos y soporte a colegas con
+herramientas digitales.
+
+Adjunto mi CV en PDF. Respecto a la remuneración pretendida, indico $700.000
+mensuales por la carga horaria de la pasantía.
+
+Quedo a disposición para coordinar una entrevista cuando les sea conveniente.
+
+Muchas gracias por su tiempo.
+Saludos cordiales,
+
+**Ignacio Palmeri**
+Teléfono: +54 9 11 5509-0832
+Email: ignaciopalmeri1@gmail.com
+LinkedIn: linkedin.com/in/ignaciopalmeri
+Portfolio: ignaciopalmeri.vercel.app
+
+---
+**Nota:** es el plan B (fit 3.8); enviar después de A y B. Ref exacta del aviso: `pasante soporte` (en minúscula, así figura en el aviso).
