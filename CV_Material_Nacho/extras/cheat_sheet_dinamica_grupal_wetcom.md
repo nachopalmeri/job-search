@@ -7,6 +7,30 @@
 
 ---
 
+## LO QUE SABEMOS DE LAS DINÁMICAS REALES DE WETCOM (Glassdoor, testimonios 2023-2025)
+
+Proceso completo confirmado por candidatos: llamada telefónica → **entrevista grupal virtual** → entrevista individual presencial → entrevista final con CTO/CEO.
+
+**En la grupal (testimonios reales):**
+1. Cada candidato se presenta (30-60 seg) y dice qué tecnologías conoce
+2. **Actividad: armar una presentación de una PC con componentes en 15 min (grupal)** — apareció en 2 testimonios, es la dinámica más probable
+3. Preguntas técnicas básicas de redes/hardware a medida que avanza la charla
+
+**Preguntas técnicas REALES reportadas por candidatos de Wetcom:**
+- ¿Qué es un bit? ¿Qué es el ancho de banda? ¿Bit vs byte?
+- Carga y descarga (up/down speed)
+- ¿Qué es VMware? ¿Qué es la virtualización?
+- Diferencia 2.4GHz vs 5GHz (WiFi)
+- Comandos de PC (Windows)
+- "De tener toda la plata del mundo, ¿cómo armarías tu PC ideal?" — pregunta real del proceso
+
+**Otras etapas (para saber qué viene después):**
+- Individual presencial: datos personales + **lectura de un texto en inglés en voz alta**
+- Final con CTO/CEO: preguntas técnicas de redes y datacenter (puede ser frío — no asustarse)
+- Proceso promedio: ~34 días (puede estirarse a 2 meses); no siempre avisan si no quedás → seguir postulando hasta oferta firme
+
+---
+
 ## DATOS CONCRETOS DE WETCOM (para "¿por qué Wetcom?")
 
 1. **20 años en 2026** — fundada 2006 por Diego Quintana (CEO) y Nicolás Solop (CTO).
@@ -62,7 +86,16 @@
 
 ## REPASO RÁPIDO 30 MIN (si sobra tiempo)
 Técnico (conceptos, no profundidad): DNS (resolución de nombres), DHCP, puertos 21/22/80/443/3389, full vs incremental vs differential backup, dominio vs grupo de trabajo, qué es virtualización (VMware) y cloud.
-Inglés: conditionals (wish/if only), "to have something done", inversiones neither/nor, tag questions.
+
+**Fundamentos que preguntan en Wetcom (según testimonios) — repasar SÍ o SÍ:**
+- Bit vs byte (bit = 0/1, byte = 8 bits)
+- Ancho de banda (capacidad de transmisión, Mbps) y velocidad de carga/descarga
+- 2.4GHz vs 5GHz: 2.4 llega más lejos pero más lento y más interferencia; 5 más rápido, menos alcance
+- VMware / virtualización: correr varias máquinas virtuales sobre un servidor físico (hypervisor)
+- Comandos Windows: ipconfig, ping, netstat, tracert, sfc /scannow, msconfig
+- **"PC ideal": procesador (CPU), RAM, SSD/HDD, placa de video, fuente, mother** — pensá 2 argumentos de por qué elegís cada parte (ej. "SSD NVMe para que el SO y los programas carguen rápido, 32GB RAM porque hago virtualización")
+
+Inglés: conditionals (wish/if only), "to have something done", inversiones neither/nor, tag questions. Puede haber **lectura de texto en voz alta** — practicá leyendo 1 minuto en inglés en voz alta hoy.
 
 ## CHECKLIST FINAL (martes 11/08)
 - [ ] 13:40 entrando al Meet, auriculares, agua, papel y lápiz
