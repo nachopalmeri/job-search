@@ -107,3 +107,11 @@ Inglés: conditionals (wish/if only), "to have something done", inversiones neit
 
 ## REGLA DE ORO
 No buscás ser el que más habla; buscás ser el que hace que el equipo funcione.
+
+## 💰 SUELDO ESTIMADO (para saber si la oferta es justa)
+- Wetcom encuadra en **CCT 130/75**, categoría **Personal Auxiliar** (art. 8: reparación/mantenimiento/service = IT support; NO administrativo).
+- Básico auxiliar A julio 2026: **$1.249.646** (partir de ahí, no de administrativo).
+- **Part-time 30hs (8:30-14:30, meses 1-6): ~$900.000 bruto/mes** (833K básico + presentismo 8,33%).
+- **Full-time (post 6 meses): ~$1.350.000 bruto/mes.**
+- Referencia: es el piso del mercado (Openqube: "Wetcom paga MUY poco" vs. mercado; Molinos junior full-time paga $2.4M). Se compensa con Swiss Medical, certificación Microsoft pagada (USD 400-600), internet, gimnasio, día de cumpleaños.
+- Si part-time < $800K → te estarían pagando bajo convenio; podés preguntarlo con fundamento.
