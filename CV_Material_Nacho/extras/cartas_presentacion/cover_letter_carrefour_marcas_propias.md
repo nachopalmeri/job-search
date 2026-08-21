@@ -1,0 +1,17 @@
+# Cover letter — carrefour_marcas_propias
+
+> Generado desde `cv_carrefour_marcas_propias.md` — es — 2026-08-21 — sin datos inventados.
+
+Buenos Aires, 21 de August de 2026
+
+Estimados/as del equipo de Seleccion de Carrefour Marcas Propias:
+
+Soy Ignacio Palmeri, estudiante de Lic. en Gestion de Tecnologias de la Informacion (UADE, 2do ano Q4, promedio 8.2/10). Me presento a la busqueda de Carrefour Marcas Propias en Carrefour Marcas Propias porque mi perfil combina lo que piden con lo que ya hago: Bot que agrega ofertas de varias fuentes, filtra y genera resúmenes con LLM; dashboard con métricas. https://github.com/nachopalmeri/jobbot. Busco una pasantia part-time (20 h semanales, hibrido/presencial CABA/GBA) donde pueda aprender construyendo.
+
+La posicion de Carrefour Marcas Propias en Carrefour Marcas Propias combina analisis de datos, automatizacion y soporte con trabajo con Excel/SQL/Python, que es exactamente mi stack diario. Aporto prolijidad, trazabilidad y ganas de aprender lo especifico del dominio.
+
+Quedo a disposicion para una entrevista. Portfolio: https://ignaciopalmeri.vercel.app/cv — CV adjunto (Ignacio_Palmeri_CarrefourMarcasPropias.pdf). Contacto: ignaciopalmeri1@gmail.com · +54 9 11 5509-0832 · linkedin.com/in/ignaciopalmeri · github.com/nachopalmeri.
+
+Saludos cordiales,
+Ignacio Palmeri
++54 9 11 5509-0832 · ignaciopalmeri1@gmail.com

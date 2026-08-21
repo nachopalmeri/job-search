@@ -3,3 +3,8 @@ __pycache__/
 radar/daily-*.tsv
 radar/discoveries-*.md
 radar/seen_jobs.json
+.secrets/
+.secrets/uade_cookies.json
+*.storage.json
+.secrets/discord_token.json
+.secrets/telegram_token.json

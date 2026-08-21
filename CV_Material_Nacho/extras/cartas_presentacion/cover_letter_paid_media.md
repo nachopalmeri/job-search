@@ -1,0 +1,17 @@
+# Cover letter — paid_media
+
+> Generado desde `cv_paid_media.md` — es — 2026-08-21 — sin datos inventados.
+
+Buenos Aires, 21 de August de 2026
+
+Estimados/as del equipo de Seleccion de Paid Media:
+
+Soy Ignacio Palmeri, estudiante de Lic. en Gestion de Tecnologias de la Informacion (UADE, 2do ano Q4, promedio 8.2/10). Me presento a la busqueda de Paid Media en Paid Media porque mi perfil combina lo que piden con lo que ya hago: Bot que agrega ofertas de varias fuentes, filtra resultados y envía alertas con resúmenes generados por LLM. Busco una pasantia part-time (20 h semanales, hibrido/presencial CABA/GBA) donde pueda aprender construyendo.
+
+La posicion de Paid Media en Paid Media combina analisis de datos, automatizacion y soporte con trabajo con Excel/SQL/Python, que es exactamente mi stack diario. Aporto prolijidad, trazabilidad y ganas de aprender lo especifico del dominio.
+
+Quedo a disposicion para una entrevista. Portfolio: https://ignaciopalmeri.vercel.app/cv — CV adjunto (Ignacio_Palmeri_PaidMedia.pdf). Contacto: ignaciopalmeri1@gmail.com · +54 9 11 5509-0832 · linkedin.com/in/ignaciopalmeri · github.com/nachopalmeri.
+
+Saludos cordiales,
+Ignacio Palmeri
++54 9 11 5509-0832 · ignaciopalmeri1@gmail.com

@@ -1,0 +1,39 @@
+--- a/rubric-fit.md
++++ b/rubric-fit.md
+@@ -2,12 +2,13 @@
+ 
+ Adaptada del framework ai-job-search (MadsLorentzen). Cada oportunidad se puntúa 1-5 en 5 dimensiones. Deal-breakers veto.
+ 
+-## Dimensiones (peso)
++## Dimensiones (peso) — v2 2026-08-21 (ATS premia evidencia en bullets, no walls)
+ 
+ | Dimensión | Peso | Qué mira |
+ |---|---|---|
+-| Habilidades | 30% | ¿Usa Python/automatización/APIs/Linux/SQL? ¿Pide algo que no tengo? |
+-| Experiencia/edu | 25% | ¿Estudiante de sistemas es excluyente? ¿Exige seniority que no tengo? |
+-| Ubicación/horario | 20% | ¿Part-time 20hs? ¿AMBA/híbrido? ¿Choca con cursada noche? |
+-| Alineación carrera | 15% | ¿Es IA/data/IT? ¿Escalable a mi objetivo (pasantía → puesto real)? |
+-| Demanda del puesto | 10% | ¿Realmente necesitan cubrir (campaña activa, recrutando activo)? |
++| Evidencia en bullets | 40% | ¿Cuántos must-have del JD aparecen en bullets de EXPERIENCE/PROJECTS con verbo+resultado (no solo en SKILLS)? 5=≥80% en bullets, 1=<40% |
++| Jornada | 25% | ¿Part-time 20h explícito? 5=20h, 3=part-time sin horas, 1=full-time (veto si exige full-time) |
++| Carrera | 20% | ¿IA/data/IT/automatización/soporte escalable a puesto real? 5=stack Python/APIs/SQL/LLMs directo |
++| Ubicación | 10% | ¿AMBA híbrido/presencial o remoto AR? (fuera AMBA sin remoto → veto) |
++| Demanda del puesto | 5% | ¿Campaña activa <30d / Actively Hiring? Señal ruidosa, solo ordena backlog |
++
++> v1 30/25/20/15/10 → v2 40/25/20/10/5. Justificación: docs/specs/matching_spec.md §3. ATS 2026 premia evidencia en bullets > jornada 20h > carrera > ubicación (veto binario) > demanda.
+ 
+ ## Deal-breakers (veto directo, score final 0)
+ 
+@@ -26,6 +27,9 @@
+ ## Output por oportunidad evaluada (para tracker)
+ 
+ ```
+-fecha|portal|titulo|empresa|ubicacion|link|fit_score|gap_principal|estado|notas
++fecha|portal|titulo|empresa|ubicacion|link|fit_score|gap_principal|estado|notas|ats_score
+ ```
+ 
+-estado: aplicada, aplicando, descartada, pendiente, entrevista, oferta, rechazo, silencio
++estado: aplicada, aplicando, descartada, pendiente, entrevista, oferta, rechazo, silencio
++ats_score: 0-100 o vacío ("") si no hay CV tailoreado; no rompe compatibilidad — lectores viejos ignoran 11ª col (ver scripts/migrate_tracker_add_ats_score.py).
++
++> Migración: `python scripts/migrate_tracker_add_ats_score.py --check` / `python scripts/migrate_tracker_add_ats_score.py`

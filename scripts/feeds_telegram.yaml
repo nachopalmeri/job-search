@@ -1,0 +1,70 @@
+# feeds_telegram.yaml — Feeds Telegram/Discord IT AR para buscar_portales.py
+# Sprint 1 — 2026-08-21 — Pisculichi Labs
+# Fuente de verdad: este YAML. El scraper lee enabled:true y filtra por keywords + keywords_exclude.
+# Auth: ninguno de estos requiere login. Para canales privados, usar invite + TELEGRAM_BOT_TOKEN en .env (ASK, no hardcodear).
+# Ver portales-argentina.md Tier notes para priorización.
+
+version: 1
+defaults:
+  enabled: true
+  max_items: 20
+  lookback_days: 7
+  keywords: ["pasantia", "pasante", "trainee", "junior", "part-time", "20hs", "intern", "soporte", "help desk", "python", "datos", "infra"]
+  keywords_exclude: ["senior", "sr\\.", "lead", "manager", "full-time 40hs"]
+  dedupe_key: "url"  # url | title+date
+  output: "radar/daily-YYYY-MM-DD.tsv"
+
+feeds:
+  - id: sysarmy_telegram
+    name: "SysArmy — Comunidad IT AR (Telegram)"
+    type: telegram_channel
+    url: "https://t.me/s/sysarmy"          # preview público sin login, parseable con requests
+    api_url: "https://t.me/sysarmy"        # para Bot API con TELEGRAM_BOT_TOKEN si tenés acceso
+    invite: "https://t.me/sysarmy"
+    notes: "Canal + grupo principal IT AR (12k+). Posteá ofertas con tag #empleo. Scrapear via t.me/s/ evita Bot API. Fallback: RSS bridge https://rss-bridge.org/bridge01/?action=display&bridge=TelegramBridge&username=sysarmy&format=Atom"
+    enabled: true
+    check_frequency: "daily"
+    tags: ["infra", "soporte", "devops", "redes"]
+
+  - id: it_jobs_ar_telegram
+    name: "IT Jobs AR — Empleos IT Argentina (Telegram)"
+    type: telegram_channel
+    url: "https://t.me/s/empleosIT_ar"     # alias público; si 404 probar https://t.me/s/itjobsargentina
+    api_url: "https://t.me/empleosIT_ar"
+    invite: "https://t.me/empleosIT_ar"
+    rss_bridge: "https://rss-bridge.org/bridge01/?action=display&bridge=TelegramBridge&username=empleosIT_ar&format=Atom"
+    notes: "Canal curado de búsquedas IT AR. Alta señal para 'pasantía/soporte/junior'. Si el canal cambia de handle, actualizar username y rss_bridge."
+    enabled: true
+    check_frequency: "daily"
+    tags: ["pasantia", "junior", "soporte"]
+
+  - id: computrabajo_telegram_mirror
+    name: "Computrabajo IT — mirror Telegram (fallback RSS)"
+    type: telegram_channel
+    url: "https://t.me/s/BusquedasIT"      # canal agregador BusquedasIT (mirror de avisos)
+    api_url: "https://t.me/BusquedasIT"
+    invite: "https://t.me/BusquedasIT"
+    rss_bridge: "https://rss-bridge.org/bridge01/?action=display&bridge=TelegramBridge&username=BusquedasIT&format=Atom"
+    notes: "Agregador no oficial. Útil como radar secundario cuando Bumeran/ZonaJobs bloquean. Filtrar por 'CABA/AMBA/Remoto'."
+    enabled: true
+    check_frequency: "daily"
+    tags: ["radar", "agregador"]
+
+  # Discord — se consume vía webhook o RSS bridge (no requiere bot si es preview público)
+  - id: sysarmy_discord
+    name: "SysArmy — Discord IT AR (#empleos)"
+    type: discord_channel
+    url: "https://discord.gg/sysarmy"      # invite permanente SysArmy
+    api_url: "https://discord.com/api/guilds/309245123456"  # placeholder guild id — ASK al admin
+    channel: "empleos"                      # canal #empleos / #bolsa-de-trabajo
+    notes: "Discord SysArmy: canal #empleos con ofertas diarias. Requiere DISCORD_BOT_TOKEN para API. Alternativa sin token: RSS bridge DiscordBridge o scrapear via widget JSON https://discord.com/api/guilds/GUILD_ID/widget.json si está habilitado. ASK antes de guardar token en .secrets/discord_token.json (gitignored)."
+    enabled: false                          # disabled hasta tener DISCORD_BOT_TOKEN (HIGH_RISK)
+    check_frequency: "daily"
+    tags: ["discord", "empleos"]
+
+# Cómo agregar un feed nuevo:
+# 1. Duplicar un bloque - id único, type telegram_channel|discord_channel|rss
+# 2. Probar preview: curl -L https://t.me/s/<username> | grep -i "pasant"
+# 3. Si 403, usar rss_bridge URL en navegador y validar Atom
+# 4. Añadir keywords específicas en tags si el canal es nicho (ej. solo data)
+# 5. Correr: python scripts/buscar_portales.py --scrape telegram --write

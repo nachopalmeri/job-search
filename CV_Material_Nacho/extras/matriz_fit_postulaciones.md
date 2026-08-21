@@ -114,6 +114,29 @@ El aviso mezcla requisito de "3 años de experiencia" (parece texto de senior co
 5. **Prepárate:** coding assessment IBM (arrays/strings, SIN IA, práctica LeetCode/HackerRank) + entrevista STAR.
 6. **Anotá:** Beware "no mentir con Make/Zapier/n8n/Power BI" — si no los usaste, no los listes.
 
+## 4. Learning Loop 2026-08-21 — A/B test + Digest + Prep Bank (Sprint 4/4)
+
+### A/B test CVs (variante en tracker)
+
+| Variante | Orden | Para qué roles | Hipótesis | Asignación |
+|---|---|---|---|---|
+| **A** | Proyectos → Skills | IA/data con portfolio (BASF 4.2, Cirion 4.2, TELUS 4.7) | Reclutador valora evidencia (JobBot 81 commits, Prode 10k sims) antes que wall | `sha256(empresa|titulo)%2==0` determinístico, balance 50/50 |
+| **B** | Skills → Proyectos | Soporte/BI con ATS keyword-scan (Wetcom 4.2, Adecco 4.4, Carrefour 4.0) | ATS escanea wall técnico arriba primero | idem |
+
+Tracker: col 14 `cv_variant` (A/B) migrada con `scripts/ab_test_tracker.py --migrate` (13→14 cols, BOM-safe). Medición: `tasa_entrevista = entrevistas/enviadas` por variante (`entrevista|oferta` / `aplicada|entrevista|oferta|rechazo|silencio`). Suficiencia `n>=30` por variante; hasta entonces `insuficiente — no concluir`. Delta `A-B >5pp` define lead. Validar: `python scripts/ab_test_tracker.py --stats`.
+
+Recomendación inicial (hasta n>=30): asignar A a roles IA/data, B a soporte/BI; luego dejar hash puro para no sesgar.
+
+### Digest nocturno 21:00
+
+Push Telegram `TOP 3 a enviar` (fit desc) + `Radar 2` + `Vetados 5 + motivo` — homólogo push de esta matriz pero nightly. Script `scripts/daily_digest.py --send` (mismo token `crm_followup.py` 09:00). Clasificación: TOP=`a enviar/aplicar ya/pendiente/verificar` (fit>=3), Radar=`radar 2027`, Vetado=`descartada` o `fit<3.0` con `gap_principal`. Cron `0 21 * * 1-5` AMBA. Dry-run: `python scripts/daily_digest.py --dry-run` (2026-08-21: TOP TELUS 4.7/Central 4.5/JPMorgan 4.5, Radar Accenture/YPF, Vetados Amazon/YPF JET/Cognizant/Microsoft/Rial).
+
+### Interview prep bank
+
+Banco `CV_Material_Nacho/extras/interview_bank/` versionado: `wetcom.md` v1 curado (11 Q bit/VMware/DNS/DHCP/puertos/backup — fuente reportes candidatos, no inventado), stubs `basf/telus/central_puerto.md` v0.1 con TODO Glassdoor (bloqueo login 403 verificado 2026-08-21, curaduría manual con URL fuente requerida antes de v1). Template `_template.md`. Honestidad: B1+/B2 sin cert, RH124/CCNA no certificados, sin DApp.
+
+Spec completo: `docs/specs/learning_spec.md`.
+
 ## Acciones opcionales de impacto
 
 - **Bolsa de Empleos UADE** (alta ya) — canal donde Accenture/MELI/Despegar publican antes que en portales.

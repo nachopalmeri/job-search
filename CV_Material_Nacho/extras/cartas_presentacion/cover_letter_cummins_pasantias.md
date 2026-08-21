@@ -1,0 +1,17 @@
+# Cover letter — cummins_pasantias
+
+> Generado desde `cv_cummins_pasantias.md` — es — 2026-08-21 — sin datos inventados.
+
+Buenos Aires, 21 de August de 2026
+
+Estimados/as del equipo de Seleccion de Cummins Pasantias:
+
+Soy Ignacio Palmeri, estudiante de Lic. en Gestion de Tecnologias de la Informacion (UADE, 2do ano Q4, promedio 8.2/10). Me presento a la busqueda de Cummins Pasantias en Cummins Pasantias porque mi perfil combina lo que piden con lo que ya hago: Bot que agrega ofertas de varias fuentes, filtra y envía alertas con resúmenes LLM; dashboard con autenticación JWT. https://github.com/nachopalmeri/jobbot. Busco una pasantia part-time (20 h semanales, hibrido/presencial CABA/GBA) donde pueda aprender construyendo.
+
+La posicion de Cummins Pasantias en Cummins Pasantias combina analisis de datos, automatizacion y soporte con trabajo con Excel/SQL/Python, que es exactamente mi stack diario. Aporto prolijidad, trazabilidad y ganas de aprender lo especifico del dominio.
+
+Quedo a disposicion para una entrevista. Portfolio: https://ignaciopalmeri.vercel.app/cv — CV adjunto (Ignacio_Palmeri_CumminsPasantias.pdf). Contacto: ignaciopalmeri1@gmail.com · +54 9 11 5509-0832 · linkedin.com/in/ignaciopalmeri · github.com/nachopalmeri.
+
+Saludos cordiales,
+Ignacio Palmeri
++54 9 11 5509-0832 · ignaciopalmeri1@gmail.com
