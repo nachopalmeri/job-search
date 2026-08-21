@@ -9,6 +9,13 @@ from datetime import date
 from html import unescape
 from pathlib import Path
 
+try:
+    import yaml  # type: ignore
+except ImportError:
+    yaml = None
+
+FEEDS_YAML = Path(__file__).resolve().parent / "feeds_telegram.yaml"
+
 KEYWORDS = ["pasantia", "pasantias", "pasante", "trainee", "jovenes+talentos", "estudiante+sistemas", "junior", "part-time", "inteligencia+artificial", "python", "datos", "soporte", "help+desk"]
 
 BASE_LINKS = {
@@ -224,13 +231,54 @@ def scrape_empleosit():
     return jobs
 
 
+def scrape_telegram_feeds():
+    jobs = []
+    if yaml is None or not FEEDS_YAML.exists():
+        return jobs
+    try:
+        data = yaml.safe_load(FEEDS_YAML.read_text(encoding="utf-8"))
+    except Exception:
+        return jobs
+    feeds = data.get("feeds", []) or []
+    keywords = re.compile(r"pasant|trainee|junior|part.?time|20hs|intern|soporte|help desk|python|datos|infra", re.I)
+    for feed in feeds:
+        if not feed.get("enabled", True):
+            continue
+        if feed.get("type") not in ("telegram_channel", "rss"):
+            continue
+        url = feed.get("url", "")
+        if not url:
+            continue
+        try:
+            html = _get(url)
+        except Exception:
+            continue
+        for block in re.split(r'class="tgme_widget_message_text', html)[1:]:
+            # block empieza con ' js-message_text" dir="auto">CONTENIDO...'
+            if ">" in block:
+                block = block.split(">", 1)[1]
+            text = _clean(re.sub(r"<[^>]+>", " ", block.split("</div>", 1)[0]))
+            if not text or not keywords.search(text):
+                continue
+            m_link = re.search(r'href="(https://t\.me/[^"]+)"', block)
+            link = m_link.group(1) if m_link else url
+            title = text[:90] + "..." if len(text) > 90 else text
+            jobs.append({
+                "fecha": "", "titulo": title, "empresa": feed.get("name", "Telegram"), "ubicacion": "Telegram",
+                "modalidad": "", "jornada": "", "estado": "Telegram", "url": link,
+            })
+            if len(jobs) >= 20:
+                break
+    return jobs
+
+
 def main():
     if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description="Busqueda diaria de pasantias IT Argentina")
     ap.add_argument("--links", action="store_true", help="imprimir links de busqueda prearmados")
     ap.add_argument("--open", action="store_true", help="abrir links en el navegador")
-    ap.add_argument("--scrape", choices=["linkedin", "startups", "computrabajo", "becasit", "empleosit", "all"], help="scrapeo de avisos")
+    ap.add_argument("--scrape", choices=["linkedin", "startups", "computrabajo", "becasit", "empleosit", "telegram", "all"], help="scrapeo de avisos")
     ap.add_argument("--kw", default="pasantia", help="keyword para el scrapeo (LinkedIn / Computrabajo)")
     ap.add_argument("--write", action="store_true", help="guardar en radar/daily-YYYY-MM-DD.tsv y actualizar seen_jobs.json")
     ap.add_argument("--new", action="store_true", help="mostrar solo avisos no vistos antes (comparado contra seen_jobs.json)")
@@ -253,7 +301,7 @@ def main():
         if args.write:
             tsv_path = RADAR_DIR / f"daily-{date.today().isoformat()}.tsv"
             tsv_path.write_text(TSV_HEADER + "\n", encoding="utf-8")
-        selected = ["linkedin", "startups", "computrabajo", "becasit", "empleosit"] if args.scrape == "all" else [args.scrape]
+        selected = ["linkedin", "startups", "computrabajo", "becasit", "empleosit", "telegram"] if args.scrape == "all" else [args.scrape]
         for name in selected:
             print(f"## {name.capitalize()}")
             if name == "linkedin":
@@ -266,6 +314,8 @@ def main():
                 jobs = scrape_becasit()
             elif name == "empleosit":
                 jobs = scrape_empleosit()
+            elif name == "telegram":
+                jobs = scrape_telegram_feeds()
             else:
                 jobs = []
             if args.write or args.new:
