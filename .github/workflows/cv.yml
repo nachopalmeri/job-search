@@ -1,0 +1,34 @@
+name: CV ATS Check
+
+on:
+  push:
+    paths:
+      - "CV_Material_Nacho/**"
+      - "scripts/**"
+      - ".github/workflows/cv.yml"
+  pull_request:
+    paths:
+      - "CV_Material_Nacho/**"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: |
+          pip install reportlab python-docx pyyaml pdfminer.six pypdf PyPDF2
+      - name: YAML -> MD sync check
+        run: python CV_Material_Nacho/yaml_to_md.py --check
+      - name: Build all CVs
+        run: python CV_Material_Nacho/extras/generate_cv_files.py
+      - name: Validate ATS (all PDFs/DOCXs)
+        run: python scripts/validate_ats.py --all
+      - name: Keyword sanity (master vs sample JD)
+        run: |
+          echo "python, sql, excel, power bi, dashboard, api, linux, git, llm, automation" > /tmp/jd.txt
+          python scripts/keyword_match.py --jd-file /tmp/jd.txt --cv CV_Material_Nacho/cv_master_es.md || true

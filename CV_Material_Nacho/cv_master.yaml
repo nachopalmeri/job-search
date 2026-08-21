@@ -1,0 +1,164 @@
+# Fuente única estructurada — Ignacio Palmeri
+# v1 (21/08/2026) Sprint 2. Genera cv_master_es.md / cv_master_en.md via yaml_to_md.py
+# NO inventar campos: solo datos verificables de profile.md + cv_master_*.md
+basics:
+  name: "Ignacio Palmeri"
+  label: "Estudiante Lic. Gestión de TI (2º año) — Busco pasantía part-time IA/IT"
+  label_en: "B.A. Information Technology Management Student (2nd year) — Seeking part-time internship AI/IT"
+  email: "ignaciopalmeri1@gmail.com"
+  phone: "+54 9 11 5509-0832"
+  location: "Temperley, Buenos Aires, Argentina"
+  profiles:
+    - network: "LinkedIn"
+      url: "https://linkedin.com/in/ignaciopalmeri"
+      username: "linkedin.com/in/ignaciopalmeri"
+    - network: "GitHub"
+      url: "https://github.com/nachopalmeri"
+      username: "github.com/nachopalmeri"
+    - network: "Portfolio"
+      url: "https://ignaciopalmeri.vercel.app"
+      username: "ignaciopalmeri.vercel.app"
+
+education:
+  - institution: "UADE"
+    area: "Lic. en Gestión de Tecnologías de la Información"
+    area_en: "B.A. in Information Technology Management"
+    startDate: "2025-03"
+    endDate: "2028-12"
+    status: "En curso — Q4, alumno regular"
+    status_en: "In progress — Q4, good standing"
+    gpa: "8.2/10"
+    details: "15 de 40 materias aprobadas"
+    details_en: "15 of 40 courses completed"
+  - institution: "Colegio Eccleston"
+    area: "Bachiller en Economía y Administración"
+    area_en: "High School Diploma in Economics & Administration"
+    startDate: "2020-03"
+    endDate: "2024-12-20"
+    gpa: "9.11/10"
+    details: "Analítico oficial"
+
+experience:
+  - company: "Grido (franquicia)"
+    position: "Representante de Atención al Cliente"
+    position_en: "Customer Service Representative"
+    startDate: "2023-10"
+    endDate: "Present"
+    location: "Temperley, BA"
+    summary: "Atención al cliente en punto de venta de alto tráfico"
+    highlights:
+      - "Gestión de consultas, resolución de incidencias en tiempo real y facturación"
+      - "Conciliación de caja, control de inventario y cobertura de francos"
+      - "Construí planillas de Excel propias para seguimiento de ventas e inventario"
+      - "Carga horaria actual: ~10 h semanales (part-time)"
+    highlights_en:
+      - "Customer-facing service at high-traffic point of sale"
+      - "Cash reconciliation, inventory control and shift coverage"
+      - "Built own Excel trackers for sales and inventory"
+      - "Current load: ~10 h/week (part-time)"
+
+projects:
+  - name: "JobBot"
+    role: "Asistente de búsqueda laboral con IA (bot + dashboard)"
+    role_en: "AI-assisted job search (Telegram bot + dashboard)"
+    startDate: "2026"
+    keywords: ["Python", "Telegram Bot API", "FastAPI", "Next.js", "PostgreSQL", "LLMs (Groq)", "Stripe/MercadoPago"]
+    highlights:
+      - "Bot de Telegram que agrega ofertas de varias fuentes, filtra y envía alertas con resúmenes LLM"
+      - "Dashboard web con auth JWT/httpOnly + billing sandbox (Stripe/MercadoPago)"
+      - "Desarrollado con asistencia de IA y revisado manualmente"
+    highlights_en:
+      - "Telegram bot aggregating jobs from multiple sources, filtering and sending LLM summaries"
+      - "Web dashboard with JWT/httpOnly auth + sandbox billing"
+    url: "https://github.com/nachopalmeri/jobbot"
+    demo: ""
+  - name: "FranquiYA"
+    role: "Dashboard full-stack (prototipo) para operaciones de franquicia"
+    role_en: "Full-stack dashboard prototype for franchise operations"
+    startDate: "2025"
+    endDate: "2026"
+    keywords: ["Next.js", "React", "TypeScript", "FastAPI", "SQLAlchemy", "SQLite"]
+    highlights:
+      - "Prototipo 57 commits: inventario, facturas, empleados, turnos, auditorías"
+      - "Flujos y requisitos sobre operaciones reales; API REST + Pydantic + Jest/pytest"
+    highlights_en:
+      - "57-commit prototype: inventory, invoices, employees, shifts, audits"
+      - "REST API + Pydantic + testing"
+    url: "https://github.com/nachopalmeri/FranquiYA"
+    demo: "https://franqui-ya.vercel.app"
+  - name: "Prode Mundial 2026"
+    role: "Motor estadístico de predicción deportiva"
+    role_en: "Statistical sports prediction engine"
+    startDate: "2026"
+    keywords: ["Python", "NumPy/Pandas", "APIs externas (Polymarket odds)", "MIT"]
+    highlights:
+      - "Consenso ponderado 10 fuentes, matriz Poisson 7x7, 10k simulaciones Monte Carlo"
+      - "Pipeline automatizado; deploy en Vercel"
+    highlights_en:
+      - "Weighted consensus 10 sources, 7x7 Poisson, 10k Monte Carlo simulations"
+    url: "https://github.com/nachopalmeri/prode-mundial-2026"
+    demo: "https://prode-mundial-2026-ten-omega.vercel.app"
+  - name: "PISKU"
+    role: "CLI en Python para gestión de contexto de LLMs"
+    role_en: "Python CLI for LLM context management"
+    startDate: "2026"
+    keywords: ["Python", "argparse", "LLM APIs"]
+    highlights:
+      - "Prototipo CLI con sistema de tiers y skills configurables"
+      - "Parser, dispatcher y gestor de contexto modular"
+    highlights_en:
+      - "CLI prototype with tier system and configurable skills"
+    url: ""
+  - name: "Agents System"
+    role: "Workflow personal de desarrollo asistido por IA"
+    role_en: "Personal AI-assisted development workflow"
+    startDate: "2026"
+    keywords: ["Python", "Markdown", "Git", "LLM tooling"]
+    highlights:
+      - "Sistema de agentes/skills/workflows (73 commits) — dotfiles globales"
+      - "Uso responsable: reviso, testeo y adapto todo lo generado"
+    highlights_en:
+      - "73-commit agent/skill/workflow dotfiles system"
+    url: "https://github.com/nachopalmeri/agents-system"
+
+skills:
+  - category: "Lenguajes y frameworks"
+    category_en: "Languages & frameworks"
+    keywords: ["Python", "JavaScript", "TypeScript", "FastAPI", "Next.js", "React"]
+  - category: "Bases de datos"
+    category_en: "Databases"
+    keywords: ["SQL", "PostgreSQL", "SQLite"]
+  - category: "Infraestructura y herramientas"
+    category_en: "Infrastructure & tools"
+    keywords: ["Linux (RHEL/Ubuntu, WSL2)", "Git/GitHub", "GitHub Actions", "Vercel", "Railway", "Bash"]
+  - category: "IA aplicada"
+    category_en: "Applied AI"
+    keywords: ["LLMs (Claude, Groq, Gemini)", "prompt engineering", "agent workflows", "automatización de procesos"]
+  - category: "Negocio y gestión"
+    category_en: "Business & management"
+    keywords: ["Modelado de procesos", "atención al cliente", "Excel avanzado", "metodologías ágiles"]
+
+certifications:
+  - name: "Red Hat System Administration I (RH124)"
+    issuer: "Red Hat Academy"
+    date: "2025"
+    url: ""
+  - name: "Claude Code in Action"
+    issuer: "Anthropic"
+    date: "2026"
+    url: ""
+  - name: "CCNA 1: Introduction to Networks"
+    issuer: "UADE / Cisco"
+    date: "2026-12"
+    status: "En curso"
+
+languages:
+  - language: "Español"
+    fluency: "Nativo"
+  - language: "Inglés"
+    fluency: "B1+/B2 — lectura técnica fluida, comunicación intermedia"
+    fluency_en: "B1+/B2 — fluent technical reading, intermediate communication"
+
+availability:
+  es: "Part-time 20 h semanales (ideal), turno mañana o tarde Lun-Vie. Híbrido/remoto; presencial CABA/GBA. Inicio inmediato."
+  en: "Part-time 20 h/week (ideal), morning or afternoon Mon-Fri. Hybrid/remote; on-site CABA/GBA. Immediate start."
