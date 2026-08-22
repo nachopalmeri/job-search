@@ -16,7 +16,7 @@ except ImportError:
 
 FEEDS_YAML = Path(__file__).resolve().parent / "feeds_telegram.yaml"
 
-KEYWORDS = ["pasantia", "pasantias", "pasante", "trainee", "jovenes+talentos", "estudiante+sistemas", "junior", "part-time", "inteligencia+artificial", "python", "datos", "soporte", "help+desk", "AI+intern", "intern", "becario", "becarios", "practicante", "practicas+profesionales", "internship"]
+KEYWORDS = ["pasantia", "pasantias", "pasante", "trainee", "jovenes+talentos", "jovenes+profesionales", "estudiante+sistemas", "junior", "part-time", "inteligencia+artificial", "python", "datos", "soporte", "help+desk", "AI+intern", "intern", "becario", "becarios", "practicante", "practicas+profesionales", "internship"]
 
 BASE_LINKS = {
     "computrabajo": "https://ar.computrabajo.com/trabajo-de-{kw}",
@@ -306,7 +306,7 @@ def main():
             print(f"## {name.capitalize()}")
             if name == "linkedin":
                 # Expand LinkedIn: 10 keywords (pasantia + AI intern + becario + etc.) — deduplicado por URL
-                linkedin_kws = ["pasantia", "pasante", "AI+intern", "intern", "becario", "practicante", "trainee", "junior", "part-time", "inteligencia+artificial"]
+                linkedin_kws = ["pasantia", "pasante", "AI+intern", "intern", "becario", "practicante", "trainee", "junior", "part-time", "inteligencia+artificial", "jovenes+profesionales", "jovenes+talentos"]
                 seen_urls = set()
                 jobs = []
                 for kw in linkedin_kws:
