@@ -16,7 +16,7 @@ except ImportError:
 
 FEEDS_YAML = Path(__file__).resolve().parent / "feeds_telegram.yaml"
 
-KEYWORDS = ["pasantia", "pasantias", "pasante", "trainee", "jovenes+talentos", "estudiante+sistemas", "junior", "part-time", "inteligencia+artificial", "python", "datos", "soporte", "help+desk"]
+KEYWORDS = ["pasantia", "pasantias", "pasante", "trainee", "jovenes+talentos", "estudiante+sistemas", "junior", "part-time", "inteligencia+artificial", "python", "datos", "soporte", "help+desk", "AI+intern", "intern", "becario", "becarios", "practicante", "practicas+profesionales", "internship"]
 
 BASE_LINKS = {
     "computrabajo": "https://ar.computrabajo.com/trabajo-de-{kw}",
@@ -278,7 +278,7 @@ def main():
     ap = argparse.ArgumentParser(description="Busqueda diaria de pasantias IT Argentina")
     ap.add_argument("--links", action="store_true", help="imprimir links de busqueda prearmados")
     ap.add_argument("--open", action="store_true", help="abrir links en el navegador")
-    ap.add_argument("--scrape", choices=["linkedin", "startups", "computrabajo", "becasit", "empleosit", "telegram", "all"], help="scrapeo de avisos")
+    ap.add_argument("--scrape", choices=["linkedin", "startups", "computrabajo", "becasit", "empleosit", "telegram", "bumeran", "all"], help="scrapeo de avisos")
     ap.add_argument("--kw", default="pasantia", help="keyword para el scrapeo (LinkedIn / Computrabajo)")
     ap.add_argument("--write", action="store_true", help="guardar en radar/daily-YYYY-MM-DD.tsv y actualizar seen_jobs.json")
     ap.add_argument("--new", action="store_true", help="mostrar solo avisos no vistos antes (comparado contra seen_jobs.json)")
@@ -301,11 +301,23 @@ def main():
         if args.write:
             tsv_path = RADAR_DIR / f"daily-{date.today().isoformat()}.tsv"
             tsv_path.write_text(TSV_HEADER + "\n", encoding="utf-8")
-        selected = ["linkedin", "startups", "computrabajo", "becasit", "empleosit", "telegram"] if args.scrape == "all" else [args.scrape]
+        selected = ["linkedin", "startups", "computrabajo", "becasit", "empleosit", "telegram", "bumeran"] if args.scrape == "all" else [args.scrape]
         for name in selected:
             print(f"## {name.capitalize()}")
             if name == "linkedin":
-                jobs = scrape_linkedin(args.kw)
+                # Expand LinkedIn: 10 keywords (pasantia + AI intern + becario + etc.) — deduplicado por URL
+                linkedin_kws = ["pasantia", "pasante", "AI+intern", "intern", "becario", "practicante", "trainee", "junior", "part-time", "inteligencia+artificial"]
+                seen_urls = set()
+                jobs = []
+                for kw in linkedin_kws:
+                    try:
+                        for j in scrape_linkedin(kw):
+                            if j["url"] not in seen_urls:
+                                seen_urls.add(j["url"])
+                                jobs.append(j)
+                    except Exception as e:
+                        print(f"WARN linkedin kw={kw}: {e}", file=sys.stderr)
+                print(f"  -> LinkedIn expandido: {len(jobs)} únicos de {len(linkedin_kws)} keywords")
             elif name == "startups":
                 jobs = scrape_startupsargentina()
             elif name == "computrabajo":
@@ -316,6 +328,18 @@ def main():
                 jobs = scrape_empleosit()
             elif name == "telegram":
                 jobs = scrape_telegram_feeds()
+            elif name == "bumeran":
+                # Intenta stealth via bumeran_scraper.py (soporta ambos import paths)
+                try:
+                    try:
+                        from scripts.bumeran_scraper import scrape_bumeran_stealth
+                    except ImportError:
+                        from bumeran_scraper import scrape_bumeran_stealth  # type: ignore
+                    jobs = scrape_bumeran_stealth(kw="pasantia", headed=False)
+                    print(f"  -> Bumeran stealth: {len(jobs)}")
+                except Exception as e:
+                    print(f"WARN bumeran stealth no disponible: {e}", file=sys.stderr)
+                    jobs = []
             else:
                 jobs = []
             if args.write or args.new:
