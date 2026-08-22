@@ -39,6 +39,11 @@ import urllib.request
 from datetime import date, datetime
 from pathlib import Path
 
+try:
+    from scripts.gmail_sync import sync as gmail_sync
+except ImportError:
+    gmail_sync = None
+
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CSV = ROOT / "tracker" / "applications.csv"
 SECRETS = ROOT / ".secrets" / "telegram_token.json"
@@ -251,6 +256,12 @@ def main():
     args = ap.parse_args()
 
     today = datetime.strptime(args.today, "%Y-%m-%d").date() if args.today else date.today()
+    # Gmail auto-tracker: actualiza tracker antes de clasificar TOP3 (no-op si gmail_sync no disponible o dry-run)
+    if gmail_sync and not args.dry_run and not args.preview:
+        try:
+            gmail_sync(dry_run=False)
+        except Exception as e:
+            print(f"WARN gmail_sync: {e}", file=sys.stderr)
     cols, rows = parse_csv(Path(args.csv))
     top, radar, vetados, rest = classify(cols, rows, today=today)
     digest = format_digest(top, radar, vetados, cols, rows, today)
