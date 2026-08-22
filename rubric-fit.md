@@ -2,15 +2,15 @@
 
 Adaptada del framework ai-job-search (MadsLorentzen). Cada oportunidad se puntúa 1-5 en 5 dimensiones. Deal-breakers veto.
 
-## Dimensiones (peso)
+## Dimensiones (peso) — v2 life-context (21/08/2026)
 
 | Dimensión | Peso | Qué mira |
 |---|---|---|
-| Habilidades | 30% | ¿Usa Python/automatización/APIs/Linux/SQL? ¿Pide algo que no tengo? |
-| Experiencia/edu | 25% | ¿Estudiante de sistemas es excluyente? ¿Exige seniority que no tengo? |
-| Ubicación/horario | 20% | ¿Part-time 20hs? ¿AMBA/híbrido? ¿Choca con cursada noche? |
-| Alineación carrera | 15% | ¿Es IA/data/IT? ¿Escalable a mi objetivo (pasantía → puesto real)? |
-| Demanda del puesto | 10% | ¿Realmente necesitan cubrir (campaña activa, recrutando activo)? |
+| Evidencia en bullets | 40% | ¿Tus bullets muestran verb+resultado+keyword JD? (ATS 2026 parsea bullets, no walls) |
+| Jornada | 25% | ¿Part-time 20hs Lun-Vie mañana/tarde? (full-time = veto) |
+| Compatibilidad horaria real | 15% | vs Calendar: UADE 18:45-22:15 veto, Psicóloga Lun 14:15 -30, Ritual Vie 10-12:30 -20 (`scripts/calendar_fit.py:1`) |
+| Carrera | 15% | ¿Es IA/data/IT escalable a puesto real? |
+| Demanda | 5% | Señal externa ruidosa, solo ordena backlog |
 
 ## Deal-breakers (veto directo, score final 0)
 
