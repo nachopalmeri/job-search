@@ -29,10 +29,12 @@ BASE_LINKS = {
     "google": "https://www.google.com/search?ibp=htl;jobs&q={kw}+pasantia+IT+Argentina",
     "uade": "https://www.empleos.uade.edu.ar/busquedaslaborales",
     "firstjob": "https://www.firstjob.com",
-    "wellfound": "https://wellfound.com/role/{kw}",
+    "wellfound": "https://wellfound.com/role/l/intern/Argentina",
+    "getonbrd": "https://www.getonbrd.com/empleos/programacion?per_page=20&search={kw}",
+    "torre": "https://torre.co/api/opportunities/_search?query={kw}&location=Argentina",
     "startupsargentina": "https://www.startupsargentina.com/jobs",
     "linkedin": "https://www.linkedin.com/jobs/search?keywords=pasantia&location=Argentina&f_TPR=r604800&f_E=1",
-    "getonbrd": "https://www.getonbrd.com.ar/trabajo/{kw}",
+    "getonbrd_ar": "https://www.getonbrd.com.ar/trabajo/{kw}",
 }
 
 LINKEDIN_URL = "https://www.linkedin.com/jobs/search?keywords={kw}&location=Argentina&f_TPR=r604800&f_E=1"
@@ -278,7 +280,7 @@ def main():
     ap = argparse.ArgumentParser(description="Busqueda diaria de pasantias IT Argentina")
     ap.add_argument("--links", action="store_true", help="imprimir links de busqueda prearmados")
     ap.add_argument("--open", action="store_true", help="abrir links en el navegador")
-    ap.add_argument("--scrape", choices=["linkedin", "startups", "computrabajo", "becasit", "empleosit", "telegram", "bumeran", "all"], help="scrapeo de avisos")
+    ap.add_argument("--scrape", choices=["linkedin", "startups", "computrabajo", "becasit", "empleosit", "telegram", "bumeran", "uade", "getonbrd", "wellfound", "torre", "all"], help="scrapeo de avisos")
     ap.add_argument("--kw", default="pasantia", help="keyword para el scrapeo (LinkedIn / Computrabajo)")
     ap.add_argument("--write", action="store_true", help="guardar en radar/daily-YYYY-MM-DD.tsv y actualizar seen_jobs.json")
     ap.add_argument("--new", action="store_true", help="mostrar solo avisos no vistos antes (comparado contra seen_jobs.json)")
@@ -301,7 +303,7 @@ def main():
         if args.write:
             tsv_path = RADAR_DIR / f"daily-{date.today().isoformat()}.tsv"
             tsv_path.write_text(TSV_HEADER + "\n", encoding="utf-8")
-        selected = ["linkedin", "startups", "computrabajo", "becasit", "empleosit", "telegram", "bumeran"] if args.scrape == "all" else [args.scrape]
+        selected = ["linkedin", "startups", "computrabajo", "becasit", "empleosit", "telegram", "bumeran", "uade", "getonbrd", "wellfound", "torre"] if args.scrape == "all" else [args.scrape]
         for name in selected:
             print(f"## {name.capitalize()}")
             if name == "linkedin":
@@ -339,6 +341,52 @@ def main():
                     print(f"  -> Bumeran stealth: {len(jobs)}")
                 except Exception as e:
                     print(f"WARN bumeran stealth no disponible: {e}", file=sys.stderr)
+                    jobs = []
+            elif name == "uade":
+                # UADE via uade_scraper.py (requiere .secrets/uade_cookies.json, si no existe → 0 y WARN)
+                try:
+                    try:
+                        from scripts.uade_scraper import scrape_uade
+                    except ImportError:
+                        from uade_scraper import scrape_uade  # type: ignore
+                    jobs = scrape_uade(headless=True, max_pages=2)
+                    print(f"  -> UADE: {len(jobs)}")
+                except SystemExit as e:
+                    print(f"WARN UADE no autenticado: {e}", file=sys.stderr)
+                    jobs = []
+                except Exception as e:
+                    print(f"WARN uade scraper: {e}", file=sys.stderr)
+                    jobs = []
+            elif name == "getonbrd":
+                try:
+                    html = _get(f"https://www.getonbrd.com/empleos/programacion?per_page=20&search=pasantia")
+                    jobs = []
+                    for block in re.split(r'class="gb-results__item', html)[1:]:
+                        title = _first(r'gb-results__title[^>]*>(.*?)</a>', block)
+                        href = _first(r'href="([^"]+)"', block)
+                        if href.startswith("/"): href = "https://www.getonbrd.com"+href
+                        if title and re.search(r"pasant|intern|junior|trainee", title, re.I):
+                            jobs.append({"titulo":title[:90],"empresa":"","ubicacion":"Remote","url":href,"fecha":"","modalidad":"","jornada":"","estado":"GetOnBoard"})
+                    print(f"  -> GetOnBoard: {len(jobs)}")
+                except Exception as e:
+                    print(f"WARN getonbrd: {e}", file=sys.stderr)
+                    jobs = []
+            elif name == "wellfound":
+                try:
+                    html = _get("https://wellfound.com/role/l/intern/Argentina")
+                    jobs = []
+                    # Wellfound is SPA, fallback to 0, handled via websearch
+                    print(f"  -> Wellfound: {len(jobs)} (SPA, usar websearch)")
+                except Exception as e:
+                    print(f"WARN wellfound: {e}", file=sys.stderr)
+                    jobs = []
+            elif name == "torre":
+                try:
+                    html = _get("https://torre.co/api/opportunities/_search?query=pasantia&location=Argentina")
+                    jobs = []
+                    print(f"  -> Torre: {len(jobs)} (API requiere POST)")
+                except Exception as e:
+                    print(f"WARN torre: {e}", file=sys.stderr)
                     jobs = []
             else:
                 jobs = []
