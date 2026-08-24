@@ -41,12 +41,27 @@ def do_login():
     SECRETS_DIR.mkdir(parents=True, exist_ok=True)
     # .gitignore ya tiene .secrets/
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
-        context = browser.new_context(locale="es-AR")
+        browser = p.chromium.launch(headless=False, args=["--ignore-certificate-errors", "--disable-blink-features=AutomationControlled"])
+        context = browser.new_context(locale="es-AR", ignore_https_errors=True)
         page = context.new_page()
+        # stealth: ocultar webdriver
+        try:
+            page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        except Exception:
+            pass
         print(f"Abriendo {UADE_LOGIN} — logueate con tu libreta UADE y navegá hasta /busquedaslaborales")
         print("Cuando veas la lista de búsquedas, vuelve acá y presiona ENTER para guardar sesión.")
-        page.goto(UADE_LOGIN, wait_until="domcontentloaded")
+        # reintento con manejo de ERR_CONNECTION_CLOSED
+        try:
+            page.goto(UADE_LOGIN, wait_until="commit", timeout=30000)
+        except Exception as e:
+            print(f"WARN goto {UADE_LOGIN} falló ({e}) — reintentando con domcontentloaded", file=sys.stderr)
+            try:
+                page.goto(UADE_LOGIN, wait_until="domcontentloaded", timeout=30000)
+            except Exception as e2:
+                print(f"ERROR no se pudo abrir UADE: {e2}. Probá abrir https://empleos.uade.edu.ar/ manualmente en tu browser normal y verificá que carga.", file=sys.stderr)
+                browser.close()
+                sys.exit(1)
         # Esperar navegación manual — no auto timeout, el usuario avisa
         input(">>> Presiona ENTER cuando ya estés en la lista de búsquedas (busquedaslaborales) ...")
         # Validar que esté en lista
@@ -75,11 +90,15 @@ def scrape_uade(headless=True, max_pages=2):
         sys.exit(1)
     jobs = []
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=headless)
-        context = browser.new_context(locale="es-AR", storage_state=str(STORAGE))
+        browser = p.chromium.launch(headless=headless, args=["--ignore-certificate-errors", "--disable-blink-features=AutomationControlled"])
+        context = browser.new_context(locale="es-AR", storage_state=str(STORAGE), ignore_https_errors=True)
         page = context.new_page()
         try:
-            page.goto(UADE_LIST, wait_until="domcontentloaded", timeout=30000)
+            page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        except Exception:
+            pass
+        try:
+            page.goto(UADE_LIST, wait_until="commit", timeout=30000)
             page.wait_for_selector("article, div.card, .busqueda-card, .listado-buscadores", timeout=15000)
         except Exception as e:
             print(f"ERROR: no cargó lista UADE ({e}) — sesión expirada? Re-login con --login", file=sys.stderr)
