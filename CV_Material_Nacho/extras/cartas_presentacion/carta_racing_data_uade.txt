@@ -1,0 +1,26 @@
+Hola,
+
+Soy Ignacio Palmeri, estudiante de 2º año (Q4) de Lic. en Gestión de Tecnologías de la Información en UADE (promedio 8.2). Me postulo a la pasantía de Data Analytics en el área deportiva.
+
+Lo que más me interesa de sistemas es el dato: juntarlo, limpiarlo, pasarlo a tableros e indicadores, y conectar eso con IA. Uso IA todos los días (agentes, workflows, Claude, Groq y Gemini) para prototipar, revisar y documentar; el resultado lo valido a mano. En el aviso veo lo mismo: bases, calidad de carga, reportes, tendencias y automatización básica.
+
+Certificaciones: Red Hat RH124 (administración de sistemas), CCNA 1 Introduction to Networks (Cisco, completado, Credly) y Claude Code in Action (Anthropic).
+
+Proyectos propios (con asistencia de IA, validados a mano):
+- Prode Mundial 2026: estadísticas deportivas, consenso de fuentes y simulaciones (Python). https://github.com/nachopalmeri/prode-mundial-2026
+- Darter: tableros de KPIs e importación de Excel. https://darter-vert.vercel.app
+- FranquiYA: dashboard de operaciones. https://github.com/nachopalmeri/FranquiYA
+- JobBot: reportes automáticos con Python, SQL e IA. https://github.com/nachopalmeri/jobbot
+
+En Grido trabajo atención al público, caja e inventario: consultas, incidencias en tiempo real y planillas Excel. Ahí aprendí que el dato tiene que servir para un problema real, no solo para la herramienta.
+
+Vivo en Temperley: Avellaneda me queda de paso. Cursada L–V 18:45–22:15; 20 hs diurnas.
+
+CV: https://drive.google.com/file/d/1aY3YUwSTAsR4GFvBw6gIUzJU0wQ-nW4f/view?usp=sharing
+LinkedIn: https://www.linkedin.com/in/ignaciopalmeri
+GitHub: https://github.com/nachopalmeri
+Web: https://ignaciopalmeri.vercel.app
+Credly: https://www.credly.com/users/ignacio-palmeri.a13864b6
+
+Quedo a disposición.
+Ignacio Palmeri · ignaciopalmeri1@gmail.com · +54 9 11 5509-0832

@@ -148,9 +148,9 @@ certifications:
     date: "2026"
     url: ""
   - name: "CCNA 1: Introduction to Networks"
-    issuer: "UADE / Cisco"
-    date: "2026-12"
-    status: "En curso"
+    issuer: "Cisco Networking Academy / UADE"
+    date: "2026"
+    url: "https://www.credly.com/users/ignacio-palmeri.a13864b6"
 
 languages:
   - language: "Español"
