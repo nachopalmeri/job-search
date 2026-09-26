@@ -27,7 +27,7 @@ Fuente de verdad para toda postulación. El resto del stack (CVs, LinkedIn, scri
 
 ## Idiomas
 - Español nativo.
-- Inglés **B1+/B2 autoevaluado, sin certificar** → plan: rendir EF SET university prioridad. NUNCA decir "bilingüe" ni "avanzado".
+- Inglés **B1 (intermedio) autoevaluado, sin certificar** → plan: rendir EF SET university prioridad. NUNCA decir "bilingüe", "fluido", "avanzado", B1+ ni B2 (decisión de Nacho, 26/09/2026).
 
 ## Skills reales y honests (verificado online, ago 2026)
 - **Python**: automatización, procesamiento de datos, scripts. Motor estadístico del Prode Mundial 2026 (Poisson 7×7, 10k Monte Carlo, odds de Polymarket).

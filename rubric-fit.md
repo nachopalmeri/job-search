@@ -14,7 +14,7 @@ Adaptada del framework ai-job-search (MadsLorentzen). Cada oportunidad se puntú
 
 ## Deal-breakers (veto directo, score final 0)
 
-- Exige inglés certificado avanzado/fluent (tengo B1+/B2 sin cert).
+- Exige inglés certificado avanzado/fluent (tengo B1 sin cert).
 - ~~Exige full-time sin opción part-time~~ (ya no es deal-breaker; ver Jornada y regla v3).
 - Exige título o 3er año (puede pedir "últimos años" → revisar con cuidado, ver IBM).
 - Fuera de AMBA sin remoto.

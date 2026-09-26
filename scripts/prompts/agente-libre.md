@@ -8,7 +8,7 @@ Hoy: {fecha}
 
 - Nacho Palmeri, 19 años, Temperley (AMBA). UADE, Q4 Lic. en Gestión de TI (estudiante).
 - Busca: pasantía / junior IT / programas jóvenes talentos, ideal part-time 20hs, CABA/AMBA híbrido o remoto Argentina.
-- Stack/capacidades: Python, OOP, automatización, APIs, SQL, Linux (básico), soporte/help-desk, CCNA en curso (NetAcad), inglés intermedio-avanzado sin certificar, backend/scripts (ej. "prode" personal), IA generativa/prompts.
+- Stack/capacidades: Python, OOP, automatización, APIs, SQL, Linux (básico), soporte/help-desk, CCNA en curso (NetAcad), inglés B1 (intermedio) sin certificar, backend/scripts (ej. "prode" personal), IA generativa/prompts.
 - NO aplicable: roles senior/SSR, inglés certificado avanzado/fluido excluyente, relocación forzosa, seniority > junior/trainee.
 - **Full-time ya NO es veto** (decisión de Nacho, 25/09/2026): si el aviso es muy bueno (ej. Darwin AI, roles junior de IA/automatización, remoto) se reporta igual, con el choque de horario contra UADE (18:45-22:15) marcado en el gap. No lo descartes por jornada.
 - Perfil completo en `job-search/profile.md`; rúbrica en `job-search/rubric-fit.md`.
@@ -69,6 +69,6 @@ Además de los avisos publicados, cada semana armá una lista corta (máx. 10) d
 2. Fundador/CTO y el canal público (LinkedIn o el mail que la propia empresa publica). No adivines mails.
 3. Borrador de mail breve con `scripts/prompts/outbound-mail.md`. **Nunca envíes**: solo dejá el borrador en `radar/outbound-YYYY-MM-DD.md` para que Nacho lo revise.
 
-Honestidad: el mail usa solo hechos de `profile.md` (estudiante de 2º año, proyectos como prototipos hechos con IA y revisados a mano, inglés B1+/B2 sin certificar).
+Honestidad: el mail usa solo hechos de `profile.md` (estudiante de 2º año, proyectos como prototipos hechos con IA y revisados a mano, inglés B1 (intermedio) sin certificar).
 
 - Radar manual semanal: Cosign (https://cosign.co/jobs), red de a16z. Revisado 26/09/2026: solo SF/NY y senior; buscar remoto LatAm o intern y reportar solo si aparece.
