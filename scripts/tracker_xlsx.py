@@ -128,7 +128,7 @@ def val(p, key):
 # orden: más reciente primero, igual que lo usarías
 def last_touch(p):
     return max(filter(None, [p.get("fecha_postulacion"), p.get("ultima_interaccion")]), default="")
-docs.sort(key=lambda p: (last_touch(p), -int(p.get("n") or 0)), reverse=True)
+docs.sort(key=last_touch, reverse=True)  # estable: a igual fecha respeta el orden del CSV (lo más nuevo arriba)
 
 E, Fp, G, Y = col("Estado"), col("Fecha postulación"), col("Última interacción"), col("Fecha límite")
 B = col("Empresa")
@@ -149,6 +149,7 @@ for r in range(HDR + 1, HDR + 1 + MAXR):
             c.font = Font(name=F, size=10, bold=True)
         elif typ == "f_dias":
             c.value = f'=IF(OR({B}{r}="",MAX({Fp}{r},{G}{r})=0),"",TODAY()-MAX({Fp}{r},{G}{r}))'
+            c.number_format = "0"  # sin esto Excel/Sheets lo muestran como fecha (1/0/1900)
             c.alignment = Alignment(horizontal="center", vertical="top")
         elif p is not None:
             v = val(p, key)
