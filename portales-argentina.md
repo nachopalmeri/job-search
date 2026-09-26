@@ -40,6 +40,7 @@ Resultado de la investigación (ago 2026) + conocimiento del mercado. Ordenados 
 | **Startups Argentina** `/empleos?page=N` | HTML SSR, ~400 avisos en 18 páginas (el viejo `/jobs` con `job-card` ya no existe; el parser anterior devolvía 0 en silencio) | Filtro de relevancia por título (`_relevant`) para no volcar 400 filas. Full-time ya no es veto |
 | **YC Work at a Startup** `ycombinator.com/jobs/role/<rol>/remote` | HTML SSR, ~34 avisos por rol (roles: software-engineer, operations, support-success, science, product-manager) | Solo remoto alcanzable desde AR (LatAm/AR/"Remote" a secas). Cobertura parcial: el sitio pagina en JS |
 | **a16z Speedrun Talent Network** `speedrun-talent-network.com/api/jobs` | API JSON (`remote=1&q=<kw>&page=N`); ojo: Cloudflare bloquea el UA completo, usar `User-Agent: Mozilla/5.0` | ~6.600 roles; "Remote" suele ser US-only: verificar a mano antes de postular |
+| **Cosign** `cosign.co/jobs` (a16z) | HTML con ~30 avisos, sin filtros ni paginacion visible; casi todo SF/NY/Austin senior. Revisado 26/09/2026: ningun remoto LatAm ni junior/intern | Radar manual semanal (1 min). No entra al scraper: bajo rendimiento para perfil junior AR. Si aparece un remoto LatAm o intern, pasarlo al tracker |
 
 ## Radar de programas (campañas anuales — revisar mensual)
 

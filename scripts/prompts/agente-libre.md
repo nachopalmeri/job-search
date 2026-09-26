@@ -70,3 +70,5 @@ Además de los avisos publicados, cada semana armá una lista corta (máx. 10) d
 3. Borrador de mail breve con `scripts/prompts/outbound-mail.md`. **Nunca envíes**: solo dejá el borrador en `radar/outbound-YYYY-MM-DD.md` para que Nacho lo revise.
 
 Honestidad: el mail usa solo hechos de `profile.md` (estudiante de 2º año, proyectos como prototipos hechos con IA y revisados a mano, inglés B1+/B2 sin certificar).
+
+- Radar manual semanal: Cosign (https://cosign.co/jobs), red de a16z. Revisado 26/09/2026: solo SF/NY y senior; buscar remoto LatAm o intern y reportar solo si aparece.
