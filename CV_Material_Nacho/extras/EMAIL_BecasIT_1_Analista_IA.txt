@@ -1,0 +1,28 @@
+PARA:      empleo@itechcareer.com
+CC:        empleoitc@gmail.com
+ADJUNTO:   Ignacio_Palmeri_Becasit_Analista_Ia.pdf
+           (D:\Dev\postulaciones_2026-09-25\PARA_ENVIAR\Ignacio_Palmeri_Becasit_Analista_Ia.pdf)
+
+ASUNTO (copiar tal cual, lo exige el aviso):
+Ref: Pasante AI — Ignacio Palmeri — Remuneración pretendida: $700.000 ARS
+
+CUERPO:
+
+Hola, buen día:
+
+Mi nombre es Ignacio Palmeri, tengo 19 años y estoy cursando el 4.º cuatrimestre de la Licenciatura en Gestión de Tecnología de la Información en UADE (alumno regular, cursada presencial de lunes a viernes por la noche, promedio 8,2/10, con disponibilidad part-time de 20 hs semanales en turno mañana o tarde).
+
+Me postulo a la búsqueda de "Pasante Analista IA" (Ref: Pasante AI). Trabajo con IA generativa de forma cotidiana: uso prompts y APIs de LLMs (Claude, Groq, Gemini), armé flujos de desarrollo asistido por IA y desarrollé JobBot, un bot de Telegram que genera resúmenes de ofertas laborales con LLMs (repositorio público: github.com/nachopalmeri/jobbot). Tengo manejo práctico de Python y nociones de SQL y automatización de procesos. Creo que mi perfil se alinea con la búsqueda y tengo muchas ganas de aprender de un equipo de IT con experiencia.
+
+Adjunto mi CV en PDF. Respecto a la remuneración pretendida, indico $700.000 ARS mensuales por la carga horaria de la pasantía.
+
+Quedo a disposición para coordinar una entrevista cuando les sea conveniente.
+
+Muchas gracias por su tiempo.
+Saludos cordiales,
+
+Ignacio Palmeri
+Teléfono: +54 9 11 5509-0832
+Email: ignaciopalmeri1@gmail.com
+LinkedIn: linkedin.com/in/ignaciopalmeri
+Portfolio: ignaciopalmeri.dev

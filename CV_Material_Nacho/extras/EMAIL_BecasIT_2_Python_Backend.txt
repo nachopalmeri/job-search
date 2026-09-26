@@ -1,0 +1,28 @@
+PARA:      empleo@itechcareer.com
+CC:        empleoitc@gmail.com
+ADJUNTO:   Ignacio_Palmeri_Becasit_Python_Backend.pdf
+           (D:\Dev\postulaciones_2026-09-25\PARA_ENVIAR\Ignacio_Palmeri_Becasit_Python_Backend.pdf)
+
+ASUNTO (copiar tal cual, lo exige el aviso):
+Ref: Pasante Python — Ignacio Palmeri — Remuneración pretendida: $700.000
+
+CUERPO:
+
+Hola, buen día:
+
+Mi nombre es Ignacio Palmeri, tengo 19 años y estoy cursando el 4.º cuatrimestre de la Licenciatura en Gestión de Tecnología de la Información en UADE (alumno regular, cursada presencial de lunes a viernes por la noche, con disponibilidad part-time de 20 hs semanales en turno mañana o tarde).
+
+Me postulo a la búsqueda de "Pasante Python Backend Developer" (Ref: Pasante Python). Programo en Python de forma autónoma: desarrollé el backend de un prode de fútbol con motor estadístico (distribución de Poisson, 10.000 simulaciones Monte Carlo), un bot de Telegram que genera resúmenes de ofertas laborales con LLMs y una API con FastAPI, todo con Git/GitHub (81+ commits reales). Si bien no tengo experiencia laboral con Flask/Django, mi base de OOP, SQL y automatización es sólida y aprendo rápido.
+
+Adjunto mi CV en PDF. Respecto a la remuneración pretendida, indico $700.000 mensuales por la carga horaria de la pasantía.
+
+Quedo a disposición para coordinar una entrevista cuando les sea conveniente.
+
+Muchas gracias por su tiempo.
+Saludos cordiales,
+
+Ignacio Palmeri
+Teléfono: +54 9 11 5509-0832
+Email: ignaciopalmeri1@gmail.com
+LinkedIn: linkedin.com/in/ignaciopalmeri
+Portfolio: ignaciopalmeri.dev

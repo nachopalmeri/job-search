@@ -78,7 +78,7 @@ Hola, ¿cómo estás? Soy Ignacio Palmeri, estudiante de 2.º año de Gestión d
 
 - [ ] Abrir el PDF y confirmar que se ve bien y que el teléfono y el mail son correctos.
 - [ ] Carrefour: confirmar el horario (medio horario) en el aviso y que la mañana te sirve.
-- [ ] IBM: si el formulario pide inglés, poner B1+/B2 sin certificar (no "avanzado").
+- [ ] IBM: si el formulario pide inglés, poner B1 sin certificar (no "avanzado").
 - [ ] BecasIT: adjuntar el PDF correcto en cada mail (Analista IA vs Python).
 - [ ] Anotar cada envío en tu Google Sheets (fecha, portal, estado "aplicada").
 
