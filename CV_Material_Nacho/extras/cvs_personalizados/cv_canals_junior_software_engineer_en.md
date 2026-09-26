@@ -64,7 +64,7 @@ Python · argparse · LLM APIs
 ## LANGUAGES
 
 - Spanish: native
-- English: B1+/B2 self-assessed, not formally certified. Fluent technical reading; intermediate written and spoken communication.
+- English: B1 (intermediate), self-assessed, not formally certified. I read technical documentation in English.
 
 ## AVAILABILITY
 

@@ -63,7 +63,7 @@ Next.js · React · TypeScript · FastAPI · SQLAlchemy · SQLite
 ## IDIOMAS
 
 - Español: nativo
-- Inglés: B1+/B2 autoevaluado, sin certificación formal. Lectura técnica fluida, comunicación escrita y oral intermedia.
+- Inglés: B1 (intermedio), autoevaluado, sin certificación formal. Leo documentación técnica en inglés.
 
 ## DISPONIBILIDAD
 
