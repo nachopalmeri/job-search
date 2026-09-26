@@ -127,7 +127,7 @@ CV_Material_Nacho/extras/interview_bank/
 **Versión:** v1 2026-08-21 — autor: Nacho Palmeri
 **Respuesta (ES, STAR):** 60-90s, honesta, cita `cv_master.yaml` + `profile.md` sin inventar
 **Respuesta (EN si aplica, HireVue):** 60s pitch
-**Prev. gap:** qué validar (ej. inglés B2)
+**Prev. gap:** qué validar (ej. inglés certificado)
 ```
 
 Versionado: `v1 YYYY-MM-DD — qué cambió` en header; git log es auditoría. Respuestas nunca inventan cert (B1+/B2, RH124 no certificado, CCNA en curso).

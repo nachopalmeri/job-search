@@ -14,7 +14,7 @@ verificable por sobre "venderse mejor".
 Datos confirmados (ago 2026): email ignaciopalmeri1@gmail.com · tel +54 9 11 5509-0832 ·
 LinkedIn /in/ignaciopalmeri · GitHub /nachopalmeri · UADE Q4, 15/40 materias, promedio 8,2 ·
 secundario 9,11 egreso 20/12/2024 · Grido oct 2023 – presente (~10 hs/sem cubriendo francos) ·
-disponibilidad 20 hs semanales, turno mañana o tarde · inglés B1+/B2 sin certificar ·
+disponibilidad 20 hs semanales, turno mañana o tarde · inglés B1 (intermedio) sin certificar ·
 JobBot NO es SaaS terminado (bot personal con alertas, sin pagos reales) ·
 FranquiYA es prototipo · PISKU open source en GitHub (no PyPI) · RH124 es curso, NO RHCSA ·
 CCNA 1 en curso, no certificación completa.

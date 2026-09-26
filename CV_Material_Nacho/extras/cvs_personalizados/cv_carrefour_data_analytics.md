@@ -59,12 +59,12 @@ Python · Telegram Bot API · FastAPI · Next.js · PostgreSQL · LLMs (Groq)
 - **Red Hat System Administration I (RH124)** — Red Hat Academy, 2025. Curso completado de administración Linux/RHEL.
 - **Claude Code in Action** — Anthropic, 2026.
 - **CCNA 1: Introduction to Networks (track Cisco)** — UADE, en curso, finalización estimada dic 2026.
-- Inglés: nivel B1+/B2 autoevaluado, sin certificación aún (opcional verificar con EF SET gratis).
+- Inglés: B1 (intermedio), autoevaluado, sin certificación formal. Leo documentación técnica en inglés.
 
 ## IDIOMAS
 
 - Español: nativo
-- Inglés: B1+/B2 — lectura técnica fluida, comunicación escrita y oral intermedia. Sin certificación formal aún.
+- Inglés: B1 (intermedio), autoevaluado, sin certificación formal. Leo documentación técnica en inglés.
 
 ## DISPONIBILIDAD
 

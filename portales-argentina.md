@@ -40,7 +40,23 @@ Resultado de la investigación (ago 2026) + conocimiento del mercado. Ordenados 
 | **Startups Argentina** `/empleos?page=N` | HTML SSR, ~400 avisos en 18 páginas (el viejo `/jobs` con `job-card` ya no existe; el parser anterior devolvía 0 en silencio) | Filtro de relevancia por título (`_relevant`) para no volcar 400 filas. Full-time ya no es veto |
 | **YC Work at a Startup** `ycombinator.com/jobs/role/<rol>/remote` | HTML SSR, ~34 avisos por rol (roles: software-engineer, operations, support-success, science, product-manager) | Solo remoto alcanzable desde AR (LatAm/AR/"Remote" a secas). Cobertura parcial: el sitio pagina en JS |
 | **a16z Speedrun Talent Network** `speedrun-talent-network.com/api/jobs` | API JSON (`remote=1&q=<kw>&page=N`); ojo: Cloudflare bloquea el UA completo, usar `User-Agent: Mozilla/5.0` | ~6.600 roles; "Remote" suele ser US-only: verificar a mano antes de postular |
-| **Cosign** `cosign.co/jobs` (a16z) | HTML con ~30 avisos, sin filtros ni paginacion visible; casi todo SF/NY/Austin senior. Revisado 26/09/2026: ningun remoto LatAm ni junior/intern | Radar manual semanal (1 min). No entra al scraper: bajo rendimiento para perfil junior AR. Si aparece un remoto LatAm o intern, pasarlo al tracker |
+| **Cosign** `cosign.co/jobs` (a16z) | Next.js + backend Convex: `POST https://cheerful-donkey-418.convex.cloud/api/action` con `{"path":"jobSearchAction:search","args":{"term","remoteOnly","cursor","limit":30}}`. Paginación por `continueCursor` | Agregador de miles de avisos (Accenture, Red Hat, Salesforce, Webflow, Chainlink, Kraken...). Se busca Argentina / Buenos Aires / LATAM / intern / junior / trainee / pasantía y se filtra tech + entry + ubicación AR/LatAm. Prueba 26/09/2026: 348 revisados → 43 relevantes. Si devuelve 0 con WARN, revisar si cambió el deployment o el nombre de la acción en el JS de /jobs |
+| **Get on Board** `getonbrd.com/api/v0/search/jobs` | API JSON pública (`query`, `per_page=50`, `page`, `expand=["company"]`) | Reemplaza el parser HTML viejo (0 resultados). Seniority 1 = sin experiencia, 2 = junior. Filtra Argentina o remoto sin zona / LatAm |
+| **Torre** `search.torre.co/opportunities/_search/` | API por POST, **máximo `size=20`** (con más da 400), paginar con `offset`. No acepta filtro de estado: se descartan las no `open` en el script | Muchas pasantías remotas "anywhere" de empresas chicas; el filtro exige título técnico |
+
+## Fuentes con el navegador de Nacho (sin script, requieren sesión)
+
+| Fuente | Cómo | Notas |
+|---|---|---|
+| **Portal UADE** | Claude in Chrome, sesión de Nacho. Filtrar por carrera (Gestión de TI, sin carrera específica, Informática, Ciencia de Datos, Desarrollo de Software) | Solo leer. El scraper `uade_scraper.py` necesita cookies en `.secrets/` y no está configurado |
+| **X (Twitter)** | Claude in Chrome, búsqueda "Más reciente" con keywords de pasantía/junior + IT (link prearmado `x_twitter` en `--links`) | Solo leer; reportar tuits con aviso concreto de la última semana |
+
+## Fuentes apagadas
+
+| Fuente | Motivo (26/09/2026) |
+|---|---|
+| **Telegram** (SysArmy, empleosIT_ar, BusquedasIT y 12 canales más probados) | Ningún canal IT AR con avisos recientes en su preview público; BusquedasIT sin posts desde 2023-05. Apagados en `feeds_telegram.yaml` |
+| **Wellfound** | SPA con login, no hay listado scrapeable. Queda como link manual |
 
 ## Radar de programas (campañas anuales — revisar mensual)
 
@@ -72,7 +88,7 @@ Clasificación por categoría. Se añaden a la rutina diaria según su tier.
 - **Bumeran** ("Bolsa de trabajo Argentina · Portal de empleo Líder en Argentina", 11) — Tier 2.
 - **LinkedIn Feed** (8) — Tier 1; el Feed importa para oportunidades "ocultas" (puestos compartidos por reclutadores).
 - **Empleos IT** (18) — Tier 2 (ya listado).
-- **Get on Board** (14) — Tier 2 (ya listado; API caída, usar web).
+- **Get on Board** (14) — Tier 2 (desde 26/09/2026 se scrapea por su API pública v0).
 
 ### C. Startups / tech / remoto
 | Portal | Notas |

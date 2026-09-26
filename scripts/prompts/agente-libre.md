@@ -15,7 +15,8 @@ Hoy: {fecha}
 
 ## Qué NO tenés que buscar (ya cubierto por el script)
 
-- Bendas, endpoints o links públicos ya scrapeados: LinkedIn (guest), Startups Argentina, Computrabajo, BecasIT, EmpleosIT.
+- Endpoints y links públicos ya scrapeados por `buscar_portales.py --scrape all`: LinkedIn (guest), **Cosign** (red de a16z, agregador de miles de avisos: se busca Argentina / Buenos Aires / LATAM / intern / junior), Startups Argentina, YC Work at a Startup, a16z Speedrun, **Get on Board** (API), **Torre** (API), Computrabajo, BecasIT, EmpleosIT.
+- Telegram: apagado desde 26/09/2026 (los canales IT AR probados no tienen avisos recientes). No lo busques salvo que aparezca un canal vivo.
 - Verificar en `job-search/radar/daily-YYYY-MM-DD.tsv` (o el del día) lo que ya está.
 
 ## Qué SÍ tenés que explorar (canal libre)
@@ -23,12 +24,15 @@ Hoy: {fecha}
 1. Google Empleos (programático vía url `https://www.google.com/search?ibp=htl;jobs&q=...`) y resultados orgánicos con `site:`.
 2. Bolsas con login/Cloudflare o SPA que no parsea el scraper:
    - Bumerán, ZonaJobs, Jooble, Indeed (usar búsqueda genérica + link si se puede).
-   - Wellfound, YC Work at a Startup (roles remotos LATAM, junior/intern).
-   - Primer Real / FirstJob, Get on Board.
-3. Páginas "carreras" directas de consultoras tech AR y empresas objetivo (Globant, Mercado Libre, Despegar, Accenture, Softvision, etc.) buscando pasantías, trainee, junior, programas de jóvenes talentos, "internship", "student program".
-4. Radar de campañas anuales (revisar si ya cerraron o siguen abiertas):
+   - Wellfound (SPA con login), Primer Real / FirstJob.
+3. **Pasada con el navegador de Nacho (Claude in Chrome, sesiones ya iniciadas; solo leer, nunca postular, dar like, seguir ni escribir):**
+   - **Portal UADE** `https://www.empleos.uade.edu.ar/`: filtrar por carrera "Licenciatura en Gestión de Tecnologías de la Información" y también "Sin carrera específica", Informática, Ciencia de Datos y Desarrollo de Software; listar las búsquedas de los últimos 7 días con su número (ej. 2123).
+   - **X (Twitter)**: búsqueda "Más reciente" con `(pasante OR pasantía OR trainee OR junior OR "sin experiencia") (IT OR sistemas OR IA OR datos OR python OR QA) (buscamos OR contratando OR "estamos buscando" OR hiring) lang:es` y otra en inglés `(hiring OR "we're hiring") (intern OR junior) (Argentina OR LATAM OR remote)`. Reportar solo tuits con aviso concreto (link o mail de la empresa), de la última semana.
+   - **Cosign como red** (además del scraper): revisar el perfil de Nacho y las empresas de sus listas; reportar si alguna empresa argentina/LatAm tiene rol junior que el scraper no tomó.
+4. Páginas "carreras" directas de consultoras tech AR y empresas objetivo (Globant, Mercado Libre, Despegar, Accenture, Softvision, etc.) buscando pasantías, trainee, junior, programas de jóvenes talentos, "internship", "student program".
+5. Radar de campañas anuales (revisar si ya cerraron o siguen abiertas):
    Wetcom Jóvenes Talentos IT, ExxonMobil Internship, YPF Pasantías, INKOMPASS Philip Morris, Programa JEI, SeedZ, Central Puerto (pasante de datos Python), Amazon Internship, IBM, TELUS AI Intern / SWE Intern, Danone Pasantías.
-5. Cualquier novedad reciente (última semana) que surja con búsqueda web genérica: "pasantía IT Argentina agosto 2026", "trainee programas jóvenes talentos 2026", etc.
+6. Cualquier novedad reciente (última semana) que surja con búsqueda web genérica: "pasantía IT Argentina agosto 2026", "trainee programas jóvenes talentos 2026", etc.
 
 ## Reglas de honestidad (NUNCA violar)
 
@@ -71,4 +75,8 @@ Además de los avisos publicados, cada semana armá una lista corta (máx. 10) d
 
 Honestidad: el mail usa solo hechos de `profile.md` (estudiante de 2º año, proyectos como prototipos hechos con IA y revisados a mano, inglés B1 (intermedio) sin certificar).
 
-- Radar manual semanal: Cosign (https://cosign.co/jobs), red de a16z. Revisado 26/09/2026: solo SF/NY y senior; buscar remoto LatAm o intern y reportar solo si aparece.
+- Cosign (https://cosign.co) entra al scraper diario desde el 26/09/2026 (acción pública `jobSearchAction:search` de su backend Convex). También sirve para outbound: las listas de empresas por inversor (a16z, YC, Accel) ayudan a elegir startups.
+
+## Registro de postulaciones
+
+La fuente de verdad es la Google Sheet de Nacho `Postulaciones_Ignacio_Palmeri` (hoja Postulaciones). En el repo, `tracker/applications.csv` es la copia exportada y `scripts/tracker_xlsx.py` regenera el Excel a partir del CSV. Nunca crear páginas web ni herramientas que dependan de una suscripción para el seguimiento.

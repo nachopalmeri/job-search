@@ -1,6 +1,6 @@
 # Interview Prep Bank — índice (Sprint 4, 2026-08-21)
 
-> Banco por empresa, Q/A versionadas, fuente Glassdoor atribuida. Honestidad: B1+/B2 sin certificar, RH124/CCNA no certificados, sin DApp/Web3 (ver `profile.md:41-44`). Git log = auditoría de versiones.
+> Banco por empresa, Q/A versionadas, fuente Glassdoor atribuida. Honestidad: inglés B1 (intermedio) sin certificar, RH124/CCNA no certificados, sin DApp/Web3 (ver `profile.md:41-44`). Git log = auditoría de versiones.
 
 ## Cómo usar
 

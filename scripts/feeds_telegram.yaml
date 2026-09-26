@@ -3,6 +3,8 @@
 # Fuente de verdad: este YAML. El scraper lee enabled:true y filtra por keywords + keywords_exclude.
 # Auth: ninguno de estos requiere login. Para canales privados, usar invite + TELEGRAM_BOT_TOKEN en .env (ASK, no hardcodear).
 # Ver portales-argentina.md Tier notes para priorización.
+# ESTADO 26/09/2026: se probaron 15 canales IT AR/LatAm; ninguno tiene avisos recientes en su preview publico.
+# Telegram queda apagado hasta encontrar un canal vivo (probar con: curl -s https://t.me/s/<canal> | grep -c tgme_widget_message_text).
 
 version: 1
 defaults:
@@ -22,7 +24,7 @@ feeds:
     api_url: "https://t.me/sysarmy"        # para Bot API con TELEGRAM_BOT_TOKEN si tenés acceso
     invite: "https://t.me/sysarmy"
     notes: "Canal + grupo principal IT AR (12k+). Posteá ofertas con tag #empleo. Scrapear via t.me/s/ evita Bot API. Fallback: RSS bridge https://rss-bridge.org/bridge01/?action=display&bridge=TelegramBridge&username=sysarmy&format=Atom"
-    enabled: true
+    enabled: false                          # sin preview público: 0 mensajes en t.me/s/ (chequeo 26/09/2026)
     check_frequency: "daily"
     tags: ["infra", "soporte", "devops", "redes"]
 
@@ -34,7 +36,7 @@ feeds:
     invite: "https://t.me/empleosIT_ar"
     rss_bridge: "https://rss-bridge.org/bridge01/?action=display&bridge=TelegramBridge&username=empleosIT_ar&format=Atom"
     notes: "Canal curado de búsquedas IT AR. Alta señal para 'pasantía/soporte/junior'. Si el canal cambia de handle, actualizar username y rss_bridge."
-    enabled: true
+    enabled: false                          # canal inexistente o sin preview: 0 mensajes (chequeo 26/09/2026)
     check_frequency: "daily"
     tags: ["pasantia", "junior", "soporte"]
 
@@ -46,7 +48,7 @@ feeds:
     invite: "https://t.me/BusquedasIT"
     rss_bridge: "https://rss-bridge.org/bridge01/?action=display&bridge=TelegramBridge&username=BusquedasIT&format=Atom"
     notes: "Agregador no oficial. Útil como radar secundario cuando Bumeran/ZonaJobs bloquean. Filtrar por 'CABA/AMBA/Remoto'."
-    enabled: true
+    enabled: false                          # canal abandonado: último mensaje 2023-05-09 (chequeo 26/09/2026)
     check_frequency: "daily"
     tags: ["radar", "agregador"]
 

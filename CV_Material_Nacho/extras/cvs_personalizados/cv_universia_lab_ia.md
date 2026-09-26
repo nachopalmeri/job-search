@@ -65,7 +65,7 @@ Next.js · React · TypeScript · FastAPI · SQLAlchemy · SQLite
 ## IDIOMAS
 
 - Español: nativo
-- Inglés: B1+/B2 — lectura técnica fluida (clave para documentación y papers de IA).
+- Inglés: B1 (intermedio), autoevaluado, sin certificación formal. Leo documentación técnica en inglés.
 
 ## DISPONIBILIDAD
 

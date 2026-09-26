@@ -53,12 +53,12 @@ Python · Markdown · Git · LLM tooling
 - **Red Hat System Administration I (RH124)** — Red Hat Academy, 2025.
 - **Claude Code in Action** — Anthropic, 2026.
 - **CCNA 1: Introduction to Networks (track Cisco)** — UADE, en curso, finalización estimada dic 2026.
-- Inglés: B1+/B2 autoevaluado.
+- Inglés: B1 (intermedio), autoevaluado, sin certificación formal. Leo documentación técnica en inglés.
 
 ## IDIOMAS
 
 - Español: nativo
-- Inglés: B1+/B2 — lectura técnica fluida, comunicación escrita y oral intermedia (útil para investigar mercado hispano de EE. UU.).
+- Inglés: B1 (intermedio), autoevaluado, sin certificación formal. Leo documentación técnica en inglés.
 
 ## DISPONIBILIDAD
 

@@ -26,7 +26,7 @@
 **Respuesta (EN, si HireVue):**
 > "I'm Ignacio..."
 
-**Gap a validar:** inglés B2 / Power BI no tengo / etc.
+**Gap a validar:** inglés certificado / Power BI no tengo / etc.
 
 **Notas curaduría:** fecha búsqueda, filtro aplicado, si 403/ login requerido.
 ```

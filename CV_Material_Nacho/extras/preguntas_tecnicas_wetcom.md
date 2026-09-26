@@ -75,7 +75,7 @@ Estructura de respuesta (elegir 1 razón por componente — no enumerar sin más
 
 ## Preguntas de inglés preparadas (por si sale)
 
-- "¿Cuál es tu nivel de inglés oral y escrito?" → "Intermediate-to-advanced. I can hold a conversation and read technical documentation, I'd say B2. I don't have a certificate yet, but I'm working on it."
+- "¿Cuál es tu nivel de inglés oral y escrito?" → "Intermediate, around B1. I read technical documentation every day and I can hold a simple conversation. I don't have a certificate yet, but I'm working on it."
 - "¿Por qué querés participar?" → "Because I want to start my career in IT, and the program trains you in virtualization and cloud, which is exactly where I want to grow. The permanent contract and certifications are a plus."
 
 ## Repaso 30 min sugerido

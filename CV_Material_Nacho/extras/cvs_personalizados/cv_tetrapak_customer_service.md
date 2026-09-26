@@ -61,7 +61,7 @@ Python · NumPy/Pandas · External APIs · MIT
 ## LANGUAGES
 
 - Spanish: native
-- English: B1+/B2 — fluent technical reading, intermediate written and oral communication.
+- English: B1 (intermediate), self-assessed, not formally certified. I read technical documentation in English.
 
 ## AVAILABILITY
 

@@ -64,12 +64,12 @@ Python · Markdown · Git · LLM tooling
 - **Red Hat System Administration I (RH124)** — Red Hat Academy, 2025. Completed Linux/RHEL administration course.
 - **Claude Code in Action** — Anthropic, 2026.
 - **CCNA 1: Introduction to Networks (Cisco track)** — UADE, in progress, expected completion Dec 2026.
-- English: B1+/B2 self-assessed, not yet certified (optional to verify with free EF SET).
+- English: B1 (intermediate), self-assessed, not formally certified. I read technical documentation in English.
 
 ## LANGUAGES
 
 - Spanish: native
-- English: B1+/B2 — fluent technical reading, intermediate written and oral communication. No formal certification yet.
+- English: B1 (intermediate), self-assessed, not formally certified. I read technical documentation in English.
 
 ## AVAILABILITY
 

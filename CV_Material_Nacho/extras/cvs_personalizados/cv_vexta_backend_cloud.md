@@ -61,7 +61,7 @@ Python · NumPy/Pandas · APIs externas (odds) · ETL
 ## IDIOMAS
 
 - Español: nativo
-- Inglés: B1+/B2 — lectura técnica fluida, comunicación intermedia (sin certificación formal; EF SET disponible).
+- Inglés: B1 (intermedio), autoevaluado, sin certificación formal. Leo documentación técnica en inglés.
 
 ## DISPONIBILIDAD
 

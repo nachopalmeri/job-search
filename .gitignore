@@ -8,3 +8,6 @@ radar/seen_jobs.json
 *.storage.json
 .secrets/discord_token.json
 .secrets/telegram_token.json
+
+# Excel generado por scripts/tracker_xlsx.py (se sube a Drive a mano)
+tracker/*.xlsx

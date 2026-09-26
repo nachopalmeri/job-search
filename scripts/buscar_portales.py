@@ -31,7 +31,9 @@ BASE_LINKS = {
     "firstjob": "https://www.firstjob.com",
     "wellfound": "https://wellfound.com/role/l/intern/Argentina",
     "getonbrd": "https://www.getonbrd.com/empleos/programacion?per_page=20&search={kw}",
-    "torre": "https://torre.co/api/opportunities/_search?query={kw}&location=Argentina",
+    "torre": "https://torre.ai/search/jobs?q={kw}",
+    "cosign": "https://cosign.co/jobs",
+    "x_twitter": "https://x.com/search?q=(pasante%20OR%20pasantia%20OR%20trainee%20OR%20junior)%20(IT%20OR%20sistemas%20OR%20IA%20OR%20datos)%20(buscamos%20OR%20contratando%20OR%20hiring)%20lang%3Aes&f=live",
     "startupsargentina": "https://www.startupsargentina.com/jobs",
     "linkedin": "https://www.linkedin.com/jobs/search?keywords=pasantia&location=Argentina&f_TPR=r604800&f_E=1",
     "getonbrd_ar": "https://www.getonbrd.com.ar/trabajo/{kw}",
@@ -146,6 +148,21 @@ _ENTRY_TECH_RE = re.compile(
 def _relevant(title):
     t = title or ""
     return bool(_ENTRY_TECH_RE.search(t)) and not _SENIOR_RE.search(t)
+
+
+# Para agregadores masivos (Cosign, Torre, Get on Board) "intern"/"junior" solo no alcanza: tiene que ser tech/ops tecnico.
+_TECH_RE = re.compile(
+    r"(support|soporte|help ?desk|\bqa\b|tester|testing|data|datos|python|automat|\bai\b|\bia\b|\bml\b|machine learning|prompt|"
+    r"sistemas|developer|desarrollador|engineer|ingenier|software|programad|implementation|implementaci|onboarding|"
+    r"customer success|technical|t[eé]cnic|\bit\b|tecnolog|devops|cloud|backend|frontend|full.?stack|analytics|analista|"
+    r"product|security|seguridad|infra|network|redes|sql|web)", re.I)
+
+
+def _tech_entry(title, entry_hint=False):
+    t = title or ""
+    if _SENIOR_RE.search(t) or not _TECH_RE.search(t):
+        return False
+    return entry_hint or _relevant(t)
 
 
 _REMOTE_OK_RE = re.compile(r"(?i:argentina|latin america|latam|south america|americas|worldwide|global|anywhere)|\bAR\b")
@@ -280,6 +297,150 @@ def scrape_speedrun(pages=3):
     return jobs
 
 
+def _post_json(url, payload):
+    req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"),
+                                 headers={"User-Agent": "Mozilla/5.0", "Content-Type": "application/json", "Accept": "application/json"})
+    with urllib.request.urlopen(req, timeout=45) as r:
+        return json.loads(r.read().decode("utf-8", errors="replace"))
+
+
+_AR_LOC_RE = re.compile(r"argentin|buenos aires|caba|c\.a\.b\.a|latam|latin america|south america|\bAR\b", re.I)
+
+
+def scrape_cosign(pages=3):
+    """Cosign (cosign.co/jobs): agregador de avisos de empresas grandes y startups (red de a16z).
+    La pagina es Next.js y busca contra Convex: accion publica jobSearchAction:search con
+    args {term, remoteOnly, cursor, limit}. Buscamos por Argentina/Buenos Aires/LATAM y por
+    intern/junior remoto, y filtramos entry/tech + ubicacion alcanzable desde AR."""
+    endpoint = "https://cheerful-donkey-418.convex.cloud/api/action"
+    searches = [("Argentina", False), ("Buenos Aires", False), ("LATAM", True),
+                ("intern", True), ("junior", True), ("trainee", False), ("pasantia", False)]
+    jobs, seen_ids = [], set()
+    for term, remote_only in searches:
+        cursor = None
+        for _ in range(pages):
+            args = {"term": term, "cursor": cursor, "limit": 30}
+            if remote_only:
+                args["remoteOnly"] = True
+            try:
+                res = _post_json(endpoint, {"path": "jobSearchAction:search", "args": args, "format": "json"})
+            except Exception as e:
+                print(f"WARN cosign term={term}: {e}", file=sys.stderr)
+                break
+            if res.get("status") != "success":
+                print(f"WARN cosign term={term}: {res.get('errorMessage', '')[:120]}", file=sys.stderr)
+                break
+            val = res.get("value") or {}
+            for a in val.get("page") or []:
+                pid = a.get("postingId")
+                if not pid or pid in seen_ids or a.get("closed"):
+                    continue
+                seen_ids.add(pid)
+                title, loc = a.get("title") or "", a.get("location") or ""
+                is_intern = (a.get("employmentType") or "").lower() == "intern"
+                if not _tech_entry(title, is_intern):
+                    continue
+                if not (_AR_LOC_RE.search(loc) or (a.get("remote") and _remote_ok(loc))):
+                    continue
+                jobs.append({
+                    "fecha": "", "titulo": title, "empresa": a.get("organizationName") if a.get("organizationName") not in (None, "index") else (a.get("organizationPath") or "").split("/")[-1],
+                    "ubicacion": loc, "modalidad": "Remoto" if a.get("remote") else "", "jornada": a.get("employmentType") or "",
+                    "estado": "Cosign", "url": a.get("applyUrl") or a.get("url") or "https://cosign.co/jobs",
+                })
+            cursor = val.get("continueCursor")
+            if val.get("isDone") or not cursor:
+                break
+    print(f"  -> Cosign: {len(seen_ids)} avisos revisados, {len(jobs)} relevantes para AR")
+    if not seen_ids:
+        print("WARN Cosign devolvio 0 avisos: revisar si cambio el deployment Convex o la accion jobSearchAction:search", file=sys.stderr)
+    return jobs
+
+
+def scrape_getonbrd(pages=2):
+    """Get on Board via API publica v0 (/api/v0/search/jobs). Seniority 1=sin experiencia, 2=junior."""
+    queries = ["practicante", "pasantia", "trainee", "junior", "intern", "soporte", "qa", "python", "datos"]
+    jobs, seen_urls = [], set()
+    for q in queries:
+        for page in range(1, pages + 1):
+            try:
+                data = _get_json(f"https://www.getonbrd.com/api/v0/search/jobs?query={urllib.request.quote(q)}&per_page=50&page={page}&expand=%5B%22company%22%5D")
+            except Exception as e:
+                print(f"WARN getonbrd q={q}: {e}", file=sys.stderr)
+                break
+            items = data.get("data") or []
+            for it in items:
+                a = it.get("attributes") or {}
+                url = (it.get("links") or {}).get("public_url", "")
+                if not url or url in seen_urls:
+                    continue
+                seen_urls.add(url)
+                title = a.get("title") or ""
+                sen = (((a.get("seniority") or {}).get("data") or {}).get("id"))
+                countries = a.get("countries") or []
+                remote = bool(a.get("remote"))
+                zone = (a.get("remote_zone") or "") if remote else ""
+                if not _tech_entry(title, sen in (1, 2)):
+                    continue
+                if not ("Argentina" in countries or (remote and (not zone or _AR_LOC_RE.search(str(zone)) or "latam" in str(zone).lower() or "world" in str(zone).lower()))):
+                    continue
+                ts = a.get("published_at")
+                fecha = date.fromtimestamp(ts).isoformat() if isinstance(ts, (int, float)) else ""
+                jobs.append({
+                    "fecha": fecha, "titulo": title,
+                    "empresa": (((a.get("company") or {}).get("data") or {}).get("attributes") or {}).get("name", ""),
+                    "ubicacion": ", ".join(countries) or ("Remoto" if remote else ""),
+                    "modalidad": a.get("remote_modality") or "", "jornada": {1: "sin experiencia", 2: "junior"}.get(sen, ""),
+                    "estado": "GetOnBoard", "url": url,
+                })
+            if page >= (data.get("meta") or {}).get("total_pages", 1):
+                break
+    print(f"  -> GetOnBoard: {len(jobs)} (Argentina o remoto alcanzable, sin experiencia/junior)")
+    return jobs
+
+
+def scrape_torre(pages=3):
+    """Torre (torre.ai): API de busqueda publica por POST (search.torre.co). Maximo size=20 por pedido
+    (con mas devuelve 400), se pagina con offset. Solo abiertas, AR o remoto anywhere/LatAm."""
+    queries = ["pasante", "pasantia", "intern", "trainee", "junior", "python", "soporte", "qa", "analista de datos"]
+    jobs, seen_ids = [], set()
+    results = []
+    for q in queries:
+        payload = {"and": [{"keywords": {"term": q, "locale": "es"}}]}  # la API no acepta filtro de estado: se filtra abajo
+        for p in range(pages):
+            try:
+                data = _post_json(f"https://search.torre.co/opportunities/_search/?size=20&offset={p * 20}&lang=es", payload)
+            except Exception as e:
+                print(f"WARN torre q={q}: {e}", file=sys.stderr)
+                break
+            batch = data.get("results") or []
+            results.extend(batch)
+            if len(batch) < 20:
+                break
+    for r in results:
+        oid = r.get("id")
+        if not oid or oid in seen_ids:
+            continue
+        seen_ids.add(oid)
+        if r.get("status") != "open":
+            continue
+        title = r.get("objective") or ""
+        locs = r.get("locations") or []
+        anywhere = bool((r.get("place") or {}).get("anywhere"))
+        if not _tech_entry(title, r.get("opportunity") == "intern"):
+            continue
+        if not ("Argentina" in locs or anywhere or any(_AR_LOC_RE.search(l) for l in locs)):
+            continue
+        org = ((r.get("organizations") or [{}])[0]).get("name", "")
+        jobs.append({
+            "fecha": (r.get("created") or "")[:10], "titulo": title, "empresa": org,
+            "ubicacion": ", ".join(locs) or ("Remoto (anywhere)" if anywhere else ""),
+            "modalidad": "Remoto" if r.get("remote") else "", "jornada": r.get("type") or "",
+            "estado": "Torre", "url": f"https://torre.ai/post/{oid}",
+        })
+    print(f"  -> Torre: {len(jobs)} abiertas (AR o remoto alcanzable)")
+    return jobs
+
+
 def scrape_computrabajo(kw):
     jobs = []
     html = _get(COMPUTRABAJO_URL.format(kw=kw))
@@ -403,7 +564,7 @@ def main():
     ap = argparse.ArgumentParser(description="Busqueda diaria de pasantias IT Argentina")
     ap.add_argument("--links", action="store_true", help="imprimir links de busqueda prearmados")
     ap.add_argument("--open", action="store_true", help="abrir links en el navegador")
-    ap.add_argument("--scrape", choices=["linkedin", "startups", "yc", "speedrun", "computrabajo", "becasit", "empleosit", "telegram", "bumeran", "uade", "getonbrd", "wellfound", "torre", "all"], help="scrapeo de avisos")
+    ap.add_argument("--scrape", choices=["linkedin", "cosign", "startups", "yc", "speedrun", "getonbrd", "torre", "computrabajo", "becasit", "empleosit", "telegram", "bumeran", "uade", "wellfound", "all"], help="scrapeo de avisos")
     ap.add_argument("--kw", default="pasantia", help="keyword para el scrapeo (LinkedIn / Computrabajo)")
     ap.add_argument("--write", action="store_true", help="guardar en radar/daily-YYYY-MM-DD.tsv y actualizar seen_jobs.json")
     ap.add_argument("--new", action="store_true", help="mostrar solo avisos no vistos antes (comparado contra seen_jobs.json)")
@@ -426,7 +587,8 @@ def main():
         if args.write:
             tsv_path = RADAR_DIR / f"daily-{date.today().isoformat()}.tsv"
             tsv_path.write_text(TSV_HEADER + "\n", encoding="utf-8")
-        selected = ["linkedin", "startups", "yc", "speedrun", "computrabajo", "becasit", "empleosit", "telegram", "bumeran", "uade", "getonbrd", "wellfound", "torre"] if args.scrape == "all" else [args.scrape]
+        # "all" = fuentes que funcionan sin login. Wellfound (SPA) queda fuera; UADE y X se revisan en el navegador.
+        selected = ["linkedin", "cosign", "startups", "yc", "speedrun", "getonbrd", "torre", "computrabajo", "becasit", "empleosit", "telegram", "bumeran", "uade"] if args.scrape == "all" else [args.scrape]
         for name in selected:
             print(f"## {name.capitalize()}")
             if name == "linkedin":
@@ -484,37 +646,16 @@ def main():
                 except Exception as e:
                     print(f"WARN uade scraper: {e}", file=sys.stderr)
                     jobs = []
+            elif name == "cosign":
+                jobs = scrape_cosign()
             elif name == "getonbrd":
-                try:
-                    html = _get(f"https://www.getonbrd.com/empleos/programacion?per_page=20&search=pasantia")
-                    jobs = []
-                    for block in re.split(r'class="gb-results__item', html)[1:]:
-                        title = _first(r'gb-results__title[^>]*>(.*?)</a>', block)
-                        href = _first(r'href="([^"]+)"', block)
-                        if href.startswith("/"): href = "https://www.getonbrd.com"+href
-                        if title and re.search(r"pasant|intern|junior|trainee", title, re.I):
-                            jobs.append({"titulo":title[:90],"empresa":"","ubicacion":"Remote","url":href,"fecha":"","modalidad":"","jornada":"","estado":"GetOnBoard"})
-                    print(f"  -> GetOnBoard: {len(jobs)}")
-                except Exception as e:
-                    print(f"WARN getonbrd: {e}", file=sys.stderr)
-                    jobs = []
-            elif name == "wellfound":
-                try:
-                    html = _get("https://wellfound.com/role/l/intern/Argentina")
-                    jobs = []
-                    # Wellfound is SPA, fallback to 0, handled via websearch
-                    print(f"  -> Wellfound: {len(jobs)} (SPA, usar websearch)")
-                except Exception as e:
-                    print(f"WARN wellfound: {e}", file=sys.stderr)
-                    jobs = []
+                jobs = scrape_getonbrd()
             elif name == "torre":
-                try:
-                    html = _get("https://torre.co/api/opportunities/_search?query=pasantia&location=Argentina")
-                    jobs = []
-                    print(f"  -> Torre: {len(jobs)} (API requiere POST)")
-                except Exception as e:
-                    print(f"WARN torre: {e}", file=sys.stderr)
-                    jobs = []
+                jobs = scrape_torre()
+            elif name == "wellfound":
+                # Wellfound es una SPA con login: no hay listado scrapeable. Queda como link manual (--links).
+                print("  -> Wellfound: 0 (SPA con login; revisar a mano con --links)")
+                jobs = []
             else:
                 jobs = []
             if args.write or args.new:

@@ -10,27 +10,31 @@ job-search/
 ├── rubric-fit.md               # rúbrica de evaluación (5 dimensiones + deal-breakers)
 ├── portales-argentina.md       # portales investigados (ago 2026) + notas técnicas
 ├── scripts/
-│   ├── buscar_portales.py      # scraper unificado (5 fuentes scrapeables)
+│   ├── buscar_portales.py      # scraper unificado (11 fuentes: LinkedIn, Cosign, Startups AR, YC, Speedrun, Get on Board, Torre, Computrabajo, BecasIT, EmpleosIT, Bumeran)
+│   ├── tracker_xlsx.py         # genera el Excel/Google Sheet de seguimiento desde tracker/*.csv
 │   └── prompts/
 │       └── agente-libre.md     # prompt canónico del agente de búsqueda web libre
 ├── radar/
 │   ├── daily-YYYY-MM-DD.tsv    # output de los scrapers (determinista)
 │   └── discoveries-YYYY-MM-DD.md  # reporte del agente libre (web abierta)
 └── tracker/
-    └── applications.csv        # seguimiento de postulaciones (backup; maestro = Sheets)
+    ├── postulaciones.csv       # espejo de la Google Sheet (una fila por postulación)
+    ├── contactos.csv           # recruiters, referidos y networking
+    └── applications.csv        # legacy: radar + postulaciones hasta 26/09/2026
 ```
 
 La skill de OpenCode que orquesta todo: `.opencode/skills/job-search/SKILL.md`.
 
 ## Rutina diaria (1 comando + agentes)
 
-1. Scrapers deterministas: `python scripts/buscar_portales.py --scrape all --write` → `radar/daily-*.tsv` (LinkedIn, Startups Argentina, Computrabajo, BecasIT, EmpleosIT).
-2. Agente libre (web abierta): Google Empleos + bolsas manuales (Bumerán, ZonaJobs, Jooble, Indeed, Wellfound, FirstJob, Get on Board) + páginas de carrera de empresas + radar de campañas → `radar/discoveries-*.md`.
-3. Merge + dedupe + fit (`rubric-fit.md`) → tracker (Sheets maestro + CSV backup) → reporte top 3-5.
+1. Scrapers deterministas: `python scripts/buscar_portales.py --scrape all --write` → `radar/daily-*.tsv` (LinkedIn, Cosign, Startups Argentina, YC, Speedrun, Get on Board, Torre, Computrabajo, BecasIT, EmpleosIT; Bumeran/UADE dan WARN sin sesión). Telegram está apagado: sin canales vivos (26/09/2026).
+2. Pasada con el navegador de Nacho (Claude in Chrome, solo lectura): portal UADE por carrera y búsqueda "Más reciente" en X. Ver `scripts/prompts/agente-libre.md`.
+3. Agente libre (web abierta): Google Empleos + bolsas manuales (ZonaJobs, Jooble, Indeed, Wellfound, FirstJob) + páginas de carrera + radar de campañas + outbound → `radar/discoveries-*.md`.
+4. Merge + dedupe + fit (`rubric-fit.md`) → CV personalizado (inglés siempre B1) → Nacho postula → fila nueva en la Google Sheet (y en `tracker/postulaciones.csv`).
 
 ## Estado actual (tracker, 5/8/2026)
 
-**Tracker maestro:** el **Google Sheets del usuario** ("Tracker de postulaciones — Ignacio Palmeri"). El `tracker/applications.csv` local es backup/estado del skill, no la fuente de verdad. Al registrar una postulación: primero al Sheets, después (opcional) al CSV.
+**Tracker maestro (desde 26/09/2026):** la Google Sheet `Postulaciones_Ignacio_Palmeri` (Drive, carpeta Búsqueda Laboral), con panel, seguimiento automático a 3/14 días, contactos y CVs. Es un archivo de Nacho: no depende de Claude. `tracker/postulaciones.csv` es su espejo y `python scripts/tracker_xlsx.py` regenera el Excel. La planilla vieja ("Tracker de postulaciones — Ignacio Palmeri") queda como respaldo.
 
 - **Wetcom Jóvenes Talentos IT 17ª** — fit 4.2 — Fátima contactó por WhatsApp; llamada pendiente.
 - **BecasIT Pasante Analista IA / Python** — fit 4.5/4.2 — falta monto para enviar email.
@@ -38,9 +42,9 @@ La skill de OpenCode que orquesta todo: `.opencode/skills/job-search/SKILL.md`.
 - **TELUS AI Intern / SWE Intern** — vigencia confirmada 5/8 vía LinkedIn guest.
 - **Danone Programa de Pasantías** — publicado 4/8, incluye Sistemas; aplicar YA.
 
-## Fuentes scrapeables (verificadas 5/8/2026)
+## Fuentes scrapeables (verificadas 26/09/2026)
 
-LinkedIn (guest semana/internship), Startups Argentina (SSR), Computrabajo (SSR), BecasIT (Google Sites SSR), EmpleosIT (RSS). Detalle técnico en `portales-argentina.md`.
+LinkedIn (guest), Cosign (API Convex), Startups Argentina (SSR), YC Work at a Startup (SSR), a16z Speedrun (API), Get on Board (API v0), Torre (API POST), Computrabajo (SSR), BecasIT (Google Sites SSR), EmpleosIT (RSS). Pasada del 26/09: LinkedIn 326, Cosign 40, Startups AR 82, YC 3, Speedrun 15, Get on Board 74, Torre 30. Detalle técnico en `portales-argentina.md`.
 
 ## Diferencias con el original (decisiones tomadas)
 

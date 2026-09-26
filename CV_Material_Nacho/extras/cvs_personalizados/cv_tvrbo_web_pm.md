@@ -65,7 +65,7 @@ Python · Pandas — learning
 ## LANGUAGES
 
 - Spanish: Native
-- English: B1+/B2 — fluent technical reading, intermediate communication (not certified)
+- English: B1 (intermediate), self-assessed, not formally certified. I read technical documentation in English.
 
 ## AVAILABILITY
 

@@ -4,7 +4,7 @@ Perfil verificado: 19 años · Q4 Lic. Gestión TI UADE (15/40, promedio 8,2) ·
 disponible part-time 20hs turno mañana/tarde (cursada nocturna L-V presencial) · Temperley (CABA/GBA ok) ·
 Python básico/intermedio · FastAPI · Next.js/React/TS · SQL/PostgreSQL/SQLite · LLMs (Claude/Groq/Gemini) ·
 Linux (curso RH124) · CCNA 1 en curso · Grido 2+ años (atención al cliente, inventario, caja) ·
-inglés B1+/B2 autoevaluado (sin certificar).
+inglés B1 (intermedio) autoevaluado (sin certificar). [Actualizado 26/09/2026: antes decía B1+/B2]
 
 Escala: 🟢 fit alto · 🟡 fit medio (a preparar) · 🔴 fit bajo / descarta
 
@@ -61,7 +61,7 @@ Escala: 🟢 fit alto · 🟡 fit medio (a preparar) · 🔴 fit bajo / descarta
 | Criterio | ¿Lo tenés? | Nota |
 |---|---|---|
 | CCNA y/o ITIL (preferible) | ⚠️ PARCIAL | CCNA 1 **en curso** (módulo 1) → sirve como "en curso, conocimientos de TCP/IP, subnetting, routing, switching a nivel CCNA 1". |
-| Inglés intermedio | ✅ SÍ | B1+/B2 alcanza. |
+| Inglés intermedio | ✅ SÍ | B1 (intermedio) alcanza. |
 | Experiencia soporte/servicio al cliente | ✅ SÍ | Grido 2+ años. |
 | DWDM, MPLS, Fiber, routing, switching, Ethernet | ⚠️ PARCIAL | Nivel teórico de CCNA 1; no práctica real de operadora. |
 | 1,5–2,5 años para recibirse | ✅ SÍ | Cumple. |

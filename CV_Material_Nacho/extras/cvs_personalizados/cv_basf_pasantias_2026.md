@@ -66,7 +66,7 @@ Python · FastAPI · PostgreSQL · Next.js · LLMs (Groq)
 ## IDIOMAS
 
 - Español: nativo
-- Inglés: B1+/B2 — lectura técnica fluida, comunicación intermedia (sin certificar)
+- Inglés: B1 (intermedio), autoevaluado, sin certificación formal. Leo documentación técnica en inglés.
 
 ## DISPONIBILIDAD
 

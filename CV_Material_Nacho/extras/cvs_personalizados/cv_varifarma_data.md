@@ -58,7 +58,7 @@ Estudiante de 2º año (Q4) de Lic. en Gestión de Tecnologías de la Informaci�
 
 ## Idiomas
 
-- Español nativo, Inglés B1+/B2 sin certificar (lectura técnica fluida)
+- Español nativo, Inglés B1 (intermedio) sin certificar; leo documentación técnica en inglés
 
 ## Disponibilidad
 

@@ -62,7 +62,7 @@ Python · Telegram Bot API · FastAPI · Next.js · PostgreSQL · LLMs (Groq)
 ## IDIOMAS
 
 - Español: nativo
-- Inglés: B1+/B2 — lectura técnica fluida (clave para investigar fuentes internacionales).
+- Inglés: B1 (intermedio), autoevaluado, sin certificación formal. Leo documentación técnica en inglés.
 
 ## DISPONIBILIDAD
 

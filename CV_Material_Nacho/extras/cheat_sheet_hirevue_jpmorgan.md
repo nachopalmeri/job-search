@@ -5,7 +5,7 @@ Preparado 07/08/2026. Aplicar en: https://jpmc.fa.oraclecloud.com/hcmUI/Candidat
 ## Reglas de oro
 
 - Es una video entrevista **HireVue** (grabada, asincrónica). Primera etapa sin persona en vivo.
-- Tu inglés es B1/B2 autoevaluado: **no digas "bilingual" ni "advanced"**. Decí "intermediate English, and I'm working on my certification".
+- Tu inglés es B1 (intermedio) autoevaluado: **no digas "bilingual" ni "advanced"**. Decí "intermediate English, and I'm working on my certification".
 - Mirá a la cámara (no a la pantalla), fondo limpio, buena luz, ropa prolija (camisa lisa), buen micrófono.
 - Respuesta apuntada a **60-90 segundos** por pregunta. Grabá y rehacela 2-3 veces hasta salir natural.
 - Si hay bloqueo: terminar la frase con "…that's why I think I can contribute here." y sigo.
