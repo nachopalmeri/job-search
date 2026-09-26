@@ -9,7 +9,8 @@ Hoy: {fecha}
 - Nacho Palmeri, 19 años, Temperley (AMBA). UADE, Q4 Lic. en Gestión de TI (estudiante).
 - Busca: pasantía / junior IT / programas jóvenes talentos, ideal part-time 20hs, CABA/AMBA híbrido o remoto Argentina.
 - Stack/capacidades: Python, OOP, automatización, APIs, SQL, Linux (básico), soporte/help-desk, CCNA en curso (NetAcad), inglés intermedio-avanzado sin certificar, backend/scripts (ej. "prode" personal), IA generativa/prompts.
-- NO aplicable: roles senior/SSR, full-time exclusiva, inglés certificado avanzado, relocación forzosa, seniority > junior/trainee.
+- NO aplicable: roles senior/SSR, inglés certificado avanzado/fluido excluyente, relocación forzosa, seniority > junior/trainee.
+- **Full-time ya NO es veto** (decisión de Nacho, 25/09/2026): si el aviso es muy bueno (ej. Darwin AI, roles junior de IA/automatización, remoto) se reporta igual, con el choque de horario contra UADE (18:45-22:15) marcado en el gap. No lo descartes por jornada.
 - Perfil completo en `job-search/profile.md`; rúbrica en `job-search/rubric-fit.md`.
 
 ## Qué NO tenés que buscar (ya cubierto por el script)
@@ -59,3 +60,13 @@ Replí kme el resumen final entre estas marcadores (antes de cerrar tu turno):
 - Peso tu búsqueda en fuentes argentinas / LATAM remoto; no fuerces avisos US/globales salvo remoto general.
 - Si un portal intenta bloquear (403/captcha), pasá al siguiente; no insistir.
 - Eficiencia: no fragmente demasiado; prioriza profundidad en empresas/radar por sobre cantidad de portales.
+
+## Canal outbound (v3, 25/09/2026): cold email a startups (estrategia del hilo de @juampitech)
+
+Además de los avisos publicados, cada semana armá una lista corta (máx. 10) de startups **argentinas o de fundadores argentinos** que contraten o puedan crear una pasantía/junior (fuentes: Startups Argentina `/startups` y `/empleos`, YC Work at a Startup con empresas de LatAm, Speedrun con equipo remoto). Por cada una:
+
+1. Qué hace la empresa y un problema concreto y verificable (fuente con URL).
+2. Fundador/CTO y el canal público (LinkedIn o el mail que la propia empresa publica). No adivines mails.
+3. Borrador de mail breve con `scripts/prompts/outbound-mail.md`. **Nunca envíes**: solo dejá el borrador en `radar/outbound-YYYY-MM-DD.md` para que Nacho lo revise.
+
+Honestidad: el mail usa solo hechos de `profile.md` (estudiante de 2º año, proyectos como prototipos hechos con IA y revisados a mano, inglés B1+/B2 sin certificar).

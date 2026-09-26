@@ -133,27 +133,150 @@ def scrape_linkedin(kw):
     return jobs
 
 
-def scrape_startupsargentina():
-    jobs = []
-    html = _get(STARTUPS_URL)
-    for block in re.split(r'<article class="job-card">', html)[1:]:
-        m_co = re.search(r'<a href="/startups/[^"]*"[^>]*>([^<]+)</a>', block)
-        company = _clean(m_co.group(1)) if m_co else ""
-        m_tags = re.search(r'</a>\s*<span>(.*?)</span>', block, re.S)
-        tags = _clean(m_tags.group(1)) if m_tags else ""
-        tags = tags.replace("<!-- -->", "/")
-        fecha = _first(r'job-card__role"><span>([^<]+)</span>', block)
-        title = _first(r'job-card__role">.*?<h2>(.*?)</h2>', block)
-        m_loc = re.search(r'job-card__meta"><span>.*?</svg>\s*(?:<!-- -->)?\s*(.*?)</span>', block, re.S)
-        location = _clean(m_loc.group(1)) if m_loc else ""
-        m_apply = re.search(r'job-card__apply" href="([^"]+)"', block)
-        apply_url = m_apply.group(1) if m_apply else ""
-        slug = _first(r'<a href="(/startups/[^"]+)"', block)
-        profile_url = f"https://www.startupsargentina.com{slug}" if slug.startswith("/") else ""
-        jobs.append({
-            "fecha": fecha, "titulo": title, "empresa": company, "ubicacion": location,
-            "modalidad": "", "jornada": "", "estado": tags, "url": apply_url or profile_url,
-        })
+# --- Filtros de relevancia para fuentes grandes (Startups Argentina / YC / Speedrun) ---
+# Regla v3 (25/09/2026): full-time YA NO es veto. Se descarta solo por seniority claramente alto.
+_SENIOR_RE = re.compile(r"\b(senior|sr\.?|staff|principal|lead|leader|head|director|vp|manager|architect|cto|cfo|chief|ssr|semi[- ]?senior|expert|ii|iii|iv)\b", re.I)
+_ENTRY_TECH_RE = re.compile(
+    r"(intern|pasant|junior|\bjr\b|trainee|becari|practicante|entry|new grad|graduate|apprentic|"
+    r"support|soporte|help ?desk|\bqa\b|tester|test |data|datos|python|automat|\bai\b|\bia\b|\bml\b|prompt|"
+    r"sistemas|developer|desarrollador|engineer|software|implementation|onboarding|"
+    r"customer success|technical|it operations|devops)", re.I)
+
+
+def _relevant(title):
+    t = title or ""
+    return bool(_ENTRY_TECH_RE.search(t)) and not _SENIOR_RE.search(t)
+
+
+_REMOTE_OK_RE = re.compile(r"(?i:argentina|latin america|latam|south america|americas|worldwide|global|anywhere)|\bAR\b")
+_US_ONLY_RE = re.compile(r"\((?:us|usa|canada|ca|uk|eu|india|in)[^)]*\)|\bus only\b|united states|, us\b|/ us\b", re.I)
+
+
+def _remote_ok(loc):
+    """Remoto alcanzable desde Argentina: acepta LatAm/Argentina/Worldwide o 'Remote' a secas (ambiguo, se revisa a mano).
+    Rechaza 'Remote (US)', 'Toronto ... / Remote', 'Remote (FR)' y cualquier remoto atado a otra region/pais."""
+    l = (loc or "").strip()
+    if _REMOTE_OK_RE.search(l):
+        return True
+    return bool(re.fullmatch(r"remote|remoto|remote \(worldwide\)|anywhere", l, re.I))
+
+
+def _get_json(url):
+    """Speedrun (Cloudflare) rechaza el UA completo del script pero acepta uno simple."""
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.loads(r.read().decode("utf-8", errors="replace"))
+
+
+def scrape_startupsargentina(max_pages=40, only_relevant=True):
+    """Startups Argentina: el sitio migro (2026-09) de /jobs con <article class="job-card"> a
+    /empleos?page=N con <article class="...__card">. Recorre las paginas hasta que no haya avisos nuevos."""
+    jobs, seen_ids = [], set()
+    card_re = re.compile(
+        r'<h2><a href="(/empleos/([^/"]+)/([0-9a-f-]{36})/[^"]+)">(.*?)</a></h2>\s*'
+        r'<p><a href="/startups/[^"]*">(.*?)</a></p>\s*<span>(.*?)</span>', re.S)
+    page = 0
+    for page in range(1, max_pages + 1):
+        try:
+            html = _get(f"https://www.startupsargentina.com/empleos?page={page}")
+        except Exception as e:
+            if "404" not in str(e):  # 404 = fin de la paginacion (esperado)
+                print(f"WARN startupsargentina page={page}: {e}", file=sys.stderr)
+            break
+        found = 0
+        for href, co_slug, jid, title, company, loc in card_re.findall(html):
+            if jid in seen_ids:
+                continue
+            seen_ids.add(jid)
+            found += 1
+            title, company, loc = _clean(title), _clean(company), _clean(loc)
+            if only_relevant and not _relevant(title):
+                continue
+            jobs.append({
+                "fecha": "", "titulo": title, "empresa": company, "ubicacion": loc,
+                "modalidad": "", "jornada": "", "estado": "StartupsAR",
+                "url": f"https://www.startupsargentina.com{href}",
+            })
+        if found == 0:
+            break
+    print(f"  -> Startups Argentina: {len(seen_ids)} avisos totales, {len(jobs)} relevantes (paginas: {page})")
+    if len(seen_ids) == 0:
+        print("WARN Startups Argentina devolvio 0 avisos: revisar si cambio el HTML (regex card_re)", file=sys.stderr)
+    return jobs
+
+
+def scrape_yc(only_relevant=True):
+    """YC Work at a Startup (paginas SSR /jobs/role/<rol>/remote). Solo entry/tech con remoto alcanzable desde AR."""
+    jobs, seen_urls = [], set()
+    roles = ["software-engineer", "operations", "support-success", "science", "product-manager"]
+    for role in roles:
+        try:
+            html = _get(f"https://www.ycombinator.com/jobs/role/{role}/remote")
+        except Exception as e:
+            print(f"WARN yc role={role}: {e}", file=sys.stderr)
+            continue
+        for li in re.split(r'<li class="my-2 flex', html)[1:]:
+            href = _first(r'href="(/companies/[^"/]+/jobs/[^"]+)"', li)
+            if not href or href in seen_urls:
+                continue
+            seen_urls.add(href)
+            title = _first(r'href="/companies/[^"/]+/jobs/[^"]+"[^>]*>([^<]+)</a>', li)
+            company = _first(r'<span class="block font-bold md:inline">([^<]+)<!-- --> \([^)]*\)</span>', li)
+            batch = _first(r'<span class="block font-bold md:inline">[^<]+<!-- --> \(([^)]*)\)</span>', li)
+            metas = [_clean(x) for x in re.findall(r'<div class="whitespace-nowrap">([^<]*)</div>', li)]
+            loc_m = re.search(r'<div class="break-all md:break-normal">([^<]*)</div>', li)
+            loc = _clean(loc_m.group(1)) if loc_m else ""
+            jtype = metas[0] if metas else ""
+            salary = next((m for m in metas if re.search(r"[$£€]", m)), "")
+            is_intern = bool(re.search(r"intern", jtype, re.I))
+            if not _remote_ok(loc):
+                continue
+            if only_relevant and not (is_intern or _relevant(title)):
+                continue
+            if _SENIOR_RE.search(title):
+                continue
+            jobs.append({
+                "fecha": "", "titulo": title, "empresa": f"{company} ({batch})" if batch else company,
+                "ubicacion": loc, "modalidad": jtype, "jornada": salary, "estado": "YC",
+                "url": f"https://www.ycombinator.com{href}",
+            })
+    print(f"  -> YC Work at a Startup: {len(jobs)} (remoto alcanzable desde AR)")
+    return jobs
+
+
+def scrape_speedrun(pages=3):
+    """a16z Speedrun Talent Network via su API JSON (/api/jobs). Remoto + entry/intern/junior + keywords de nuestro perfil."""
+    jobs, seen_ids = [], set()
+    queries = ["intern", "junior", "entry level", "python", "support", "qa", "automation", "data analyst"]
+    for q in queries:
+        for page in range(pages):
+            try:
+                data = _get_json(f"https://speedrun-talent-network.com/api/jobs?limit=50&remote=1&page={page}&q={urllib.request.quote(q)}")
+            except Exception as e:
+                print(f"WARN speedrun q={q} page={page}: {e}", file=sys.stderr)
+                break
+            batch = data.get("jobs", [])
+            if not batch:
+                break
+            for j in batch:
+                jid = j.get("id")
+                if jid in seen_ids:
+                    continue
+                seen_ids.add(jid)
+                title = j.get("title", "")
+                loc = j.get("location", "") or "Remote"
+                if not j.get("is_remote"):
+                    continue
+                if not _remote_ok(loc):
+                    continue
+                if j.get("seniority") in ("senior", "staff", "exec", "director", "vp") or _SENIOR_RE.search(title):
+                    continue
+                jobs.append({
+                    "fecha": (j.get("published_at") or "")[:10], "titulo": title, "empresa": j.get("company_key", ""),
+                    "ubicacion": loc, "modalidad": j.get("employment_type") or "", "jornada": j.get("seniority") or "",
+                    "estado": "Speedrun", "url": "https://speedrun-talent-network.com" + j.get("path", ""),
+                })
+    print(f"  -> a16z Speedrun: {len(jobs)} remotos entry/intern")
     return jobs
 
 
@@ -280,7 +403,7 @@ def main():
     ap = argparse.ArgumentParser(description="Busqueda diaria de pasantias IT Argentina")
     ap.add_argument("--links", action="store_true", help="imprimir links de busqueda prearmados")
     ap.add_argument("--open", action="store_true", help="abrir links en el navegador")
-    ap.add_argument("--scrape", choices=["linkedin", "startups", "computrabajo", "becasit", "empleosit", "telegram", "bumeran", "uade", "getonbrd", "wellfound", "torre", "all"], help="scrapeo de avisos")
+    ap.add_argument("--scrape", choices=["linkedin", "startups", "yc", "speedrun", "computrabajo", "becasit", "empleosit", "telegram", "bumeran", "uade", "getonbrd", "wellfound", "torre", "all"], help="scrapeo de avisos")
     ap.add_argument("--kw", default="pasantia", help="keyword para el scrapeo (LinkedIn / Computrabajo)")
     ap.add_argument("--write", action="store_true", help="guardar en radar/daily-YYYY-MM-DD.tsv y actualizar seen_jobs.json")
     ap.add_argument("--new", action="store_true", help="mostrar solo avisos no vistos antes (comparado contra seen_jobs.json)")
@@ -303,7 +426,7 @@ def main():
         if args.write:
             tsv_path = RADAR_DIR / f"daily-{date.today().isoformat()}.tsv"
             tsv_path.write_text(TSV_HEADER + "\n", encoding="utf-8")
-        selected = ["linkedin", "startups", "computrabajo", "becasit", "empleosit", "telegram", "bumeran", "uade", "getonbrd", "wellfound", "torre"] if args.scrape == "all" else [args.scrape]
+        selected = ["linkedin", "startups", "yc", "speedrun", "computrabajo", "becasit", "empleosit", "telegram", "bumeran", "uade", "getonbrd", "wellfound", "torre"] if args.scrape == "all" else [args.scrape]
         for name in selected:
             print(f"## {name.capitalize()}")
             if name == "linkedin":
@@ -322,6 +445,10 @@ def main():
                 print(f"  -> LinkedIn expandido: {len(jobs)} únicos de {len(linkedin_kws)} keywords")
             elif name == "startups":
                 jobs = scrape_startupsargentina()
+            elif name == "yc":
+                jobs = scrape_yc()
+            elif name == "speedrun":
+                jobs = scrape_speedrun()
             elif name == "computrabajo":
                 jobs = scrape_computrabajo(args.kw)
             elif name == "becasit":

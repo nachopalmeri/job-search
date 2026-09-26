@@ -33,6 +33,14 @@ Resultado de la investigación (ago 2026) + conocimiento del mercado. Ordenados 
 | **Google Empleos** | google.com/search?q=...&ibp=htl;jobs | Agrega todo lo anterior. Útil como búsqueda programática diaria con keywords. |
 | **Universia / bolsas universitarias** | universia.net | Ofertas para estudiantes; la UADE tiene su propia bolsa (revisar campus UADE). |
 
+## Fuentes agregadas en v3 (25/09/2026) — scrapeables en `--scrape all`
+
+| Fuente | Cómo se scrapea | Notas |
+|---|---|---|
+| **Startups Argentina** `/empleos?page=N` | HTML SSR, ~400 avisos en 18 páginas (el viejo `/jobs` con `job-card` ya no existe; el parser anterior devolvía 0 en silencio) | Filtro de relevancia por título (`_relevant`) para no volcar 400 filas. Full-time ya no es veto |
+| **YC Work at a Startup** `ycombinator.com/jobs/role/<rol>/remote` | HTML SSR, ~34 avisos por rol (roles: software-engineer, operations, support-success, science, product-manager) | Solo remoto alcanzable desde AR (LatAm/AR/"Remote" a secas). Cobertura parcial: el sitio pagina en JS |
+| **a16z Speedrun Talent Network** `speedrun-talent-network.com/api/jobs` | API JSON (`remote=1&q=<kw>&page=N`); ojo: Cloudflare bloquea el UA completo, usar `User-Agent: Mozilla/5.0` | ~6.600 roles; "Remote" suele ser US-only: verificar a mano antes de postular |
+
 ## Radar de programas (campañas anuales — revisar mensual)
 
 ExxonMobil Internship, YPF Pasantías, INKOMPASS (Philip Morris), Programa JEI, SeedZ (trainees), Central Puerto (pasante de datos — ¡Python + pandas! buen fit), Amazon Internships, IBM (Req 127046), Wetcom Jóvenes Talentos, BecasIT.

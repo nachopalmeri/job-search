@@ -95,3 +95,28 @@ Ojo: el aviso de LinkedIn de Danone dice "mínimo 40% de la carrera aprobada" y 
 ## 6) Chevron GBS — IT Internship 2026 (no requiere mail; probabilidad baja)
 
 El aviso pide inglés fluido oral y escrito y estudiante avanzado de Ingeniería en Informática, con stack C#/.NET, Angular y Azure. El CV en inglés solo muestra lo que tenés. Si te llaman, la entrevista puede ser en inglés. No pongas "fluido" en ningún lado.
+
+---
+
+## 7) Darwin AI — roles Jr de operaciones/onboarding de IA (postulación por Workable)
+
+Startup argentina (fundada en 2023, US$7 M levantados, 300+ clientes en 20 países). Un solo CV sirve para los tres: `Ignacio_Palmeri_Darwin_Ai_Ops_Onboarding.pdf`.
+- AI Operations Executive (Jr/Semi Sr), remoto Argentina: https://apply.workable.com/darwin-ai/j/0BF6B166C3/
+- AI Prompting & Automation Executive (Jr/Semi Sr), híbrido en Buenos Aires (2 días de oficina): https://apply.workable.com/darwin-ai/j/8F8D3E2A26/
+- AI Onboarding Specialist, remoto Argentina: https://apply.workable.com/darwin-ai/j/79EE3C511A/
+
+Si piden "por qué Darwin": Trabajo hace casi tres años atendiendo clientes en un punto de venta de alto tráfico y en paralelo armo asistentes con LLMs (respuestas estructuradas en JSON, reglas, prompts). Me interesa ese punto medio entre entender lo que necesita el cliente y traducirlo a la configuración de un asistente de IA. Estoy cursando Gestión de TI en la UADE.
+
+Ojo: (1) los avisos son de dic-2025/feb-2026, confirmá que sigan abiertos; (2) son full-time: definí antes cómo encaja con tu cursada de 18:45 a 22:15 (100% remoto ayuda; el híbrido de BA no); (3) no digas que usaste Zapier/n8n/Make (no los usaste). Podés decir que aprendés rápido herramientas de automatización.
+
+## 8) Sezzle — Junior Software Engineer (Argentina, remoto, full-time)
+
+Link: https://job-boards.greenhouse.io/sezzle/jobs/6110231003 (publicado el 23/9, US$1.500–2.700 por mes, 0–3 años)
+CV: `Ignacio_Palmeri_Sezzle_Junior_Software_Engineer_EN.pdf` (en inglés: Sezzle pide el CV en inglés en sus otros avisos)
+Pide SPA, API backend, base relacional y experiencia con Claude u otro LLM: lo tenés en FranquiYA, JobBot y Agents System. El stack del aviso es Go y React: Go no lo usaste, ya está aclarado en el CV. Full-time y contractor: mismo aviso sobre horario que Darwin.
+
+## 9) Canals — Junior Software Engineer (backend, remoto)
+
+Link: https://jobs.ashbyhq.com/canals/06a7ec78-d84f-4035-9799-747524dbdc49/application
+CV: `Ignacio_Palmeri_Canals_Junior_Software_Engineer_EN.pdf`
+El aviso acepta pasantías y proyectos como experiencia (0 a 2 años) y elegir Go, Python o Node. No dice la carga horaria: preguntala antes de aceptar.

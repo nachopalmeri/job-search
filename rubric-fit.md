@@ -7,7 +7,7 @@ Adaptada del framework ai-job-search (MadsLorentzen). Cada oportunidad se puntú
 | Dimensión | Peso | Qué mira |
 |---|---|---|
 | Evidencia en bullets | 40% | ¿Tus bullets muestran verb+resultado+keyword JD? (ATS 2026 parsea bullets, no walls) |
-| Jornada | 25% | ¿Part-time 20hs Lun-Vie mañana/tarde? (full-time = veto) |
+| Jornada | 25% | Part-time 20hs Lun-Vie mañana/tarde = 5. Full-time NO es veto (v3, 25/09/2026): puntúa 2-3 según flexibilidad (remoto/horario flexible > presencial rígido) y se **marca el choque con UADE 18:45** en `gap_principal`. Si el aviso es muy bueno (rol IA/automatización, junior real, buen pago, sin exigir experiencia) se evalúa igual |
 | Compatibilidad horaria real | 15% | vs Calendar: UADE 18:45-22:15 veto, Psicóloga Lun 14:15 -30, Ritual Vie 10-12:30 -20 (`scripts/calendar_fit.py:1`) |
 | Carrera | 15% | ¿Es IA/data/IT escalable a puesto real? |
 | Demanda | 5% | Señal externa ruidosa, solo ordena backlog |
@@ -15,7 +15,7 @@ Adaptada del framework ai-job-search (MadsLorentzen). Cada oportunidad se puntú
 ## Deal-breakers (veto directo, score final 0)
 
 - Exige inglés certificado avanzado/fluent (tengo B1+/B2 sin cert).
-- Exige full-time sin opción part-time.
+- ~~Exige full-time sin opción part-time~~ (ya no es deal-breaker; ver Jornada y regla v3).
 - Exige título o 3er año (puede pedir "últimos años" → revisar con cuidado, ver IBM).
 - Fuera de AMBA sin remoto.
 - Empresa/rol que exigiría mentir en CV para postular.
