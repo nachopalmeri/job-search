@@ -55,6 +55,14 @@ CERRADOS = {"Oferta", "Rechazada", "Descartada", "Retirada"}
 DIAS_FOLLOWUP, DIAS_FRIO = 3, 14
 
 
+def _n(v):
+    """N° como entero; 0 si la celda está vacía o no es número (fila cargada a mano)."""
+    try:
+        return int(float(v))
+    except (TypeError, ValueError):
+        return 0
+
+
 def norm(s):
     s = unicodedata.normalize("NFKD", str(s or "")).encode("ascii", "ignore").decode().lower()
     return re.sub(r"[^a-z0-9]+", " ", s).strip()
@@ -148,7 +156,7 @@ class Tracker:
                             lines.append(f"{dd.isoformat()} · {m.group(2)}" if dd else ln)
                         v = "\n".join(lines)
                     elif k == "n":
-                        v = int(float(v)) if v not in (None, "") else ""
+                        v = _n(v) if v not in (None, "") else ""
                     row[k] = "" if v is None else v
                 w.writerow(row)
         return CSV_PATH
@@ -164,7 +172,7 @@ def _yq(v):
 
 
 def _fname(d):
-    base = f"{int(float(d['n'])):03d} {d['empresa']} - {d['puesto']}"
+    base = f"{_n(d['n']):03d} {d['empresa']} - {d['puesto']}"
     return re.sub(r"\s+", " ", re.sub(r'[\\/:*?"<>|#^\[\]]', " ", base)).strip()[:110]
 
 
@@ -188,7 +196,7 @@ def export_obsidian(t, folder):
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
     hoy = dt.date.today()
-    rows = sorted(t.rows(), key=lambda x: -int(float(x[1]["n"] or 0)))
+    rows = sorted(t.rows(), key=lambda x: -_n(x[1]["n"] or 0))
     lines = ["---", "tipo: registro", "area: trabajo", f"actualizado: {hoy.isoformat()}",
              "fuente: Excel Postulaciones_Ignacio_Palmeri.xlsx (generado por scripts/tracker_add.py)", "---", "",
              "# Registro de postulaciones", "",
@@ -201,9 +209,9 @@ def export_obsidian(t, folder):
         f = to_date(d["fecha_postulacion"])
         note = _fname(d)
         link = f"[aviso]({d['link']})" if str(d["link"] or "").startswith("http") else _md(d["link"])
-        lines.append("| " + " | ".join([str(int(float(d["n"]))), _md(d["empresa"]), f"[[{note}\\|{_md(d['puesto'])}]]", _md(d["estado"]), seguimiento(d, hoy),
+        lines.append("| " + " | ".join([str(_n(d["n"])), _md(d["empresa"]), f"[[{note}\\|{_md(d['puesto'])}]]", _md(d["estado"]), seguimiento(d, hoy),
                                         f.strftime("%d/%m/%y") if f else "", _fit(d["fit"]), _md(d["cv"]), _file_link(d["cv_ruta"]), link, _md(d["fuente"]), _md(d["canal"])]) + " |")
-        props = ["---", "tipo: postulacion", f"n: {int(float(d['n']))}", f"empresa: \"{_yq(d['empresa'])}\"", f"puesto: \"{_yq(d['puesto'])}\"",
+        props = ["---", "tipo: postulacion", f"n: {_n(d['n'])}", f"empresa: \"{_yq(d['empresa'])}\"", f"puesto: \"{_yq(d['puesto'])}\"",
                  f"estado: {_yq(d['estado'])}", f"fecha_postulacion: {(f.isoformat() if f else '')}", f"fit: {d['fit'] if d['fit'] not in (None, '') else ''}",
                  f"link: \"{_yq(d['link'])}\"", f"cv: \"{_yq(d['cv'])}\"", f"cv_ruta: \"{_yq(d['cv_ruta'])}\"", "---"]
         lim = to_date(d["fecha_limite"])
@@ -222,13 +230,18 @@ def export_obsidian(t, folder):
                 body += ["", f"## {title}", "", str(d[key]).strip()]
         body.append(AUTO_END)
         path = folder / f"{note}.md"
+        prev = [q for q in folder.glob(f"{_n(d['n']):03d} *.md") if q != path]
+        if prev and not path.exists():  # cambió empresa/puesto: la nota vieja se renombra y conserva "Mis apuntes"
+            prev[0].rename(path)
         keep = "\n\n## Mis apuntes\n\n"
         if path.exists():
             old = path.read_text(encoding="utf-8")
-            if AUTO_END in old:
-                tail = old.split(AUTO_END, 1)[1]
-                if tail.strip():
-                    keep = tail.rstrip("\n") + "\n"
+            if AUTO_END not in old:  # nota escrita a mano o sin marca: no se pisa
+                print(f"AVISO: {path.name} existe sin la marca {AUTO_END}; no la toqué.")
+                continue
+            tail = old.split(AUTO_END, 1)[1]
+            if tail.strip():
+                keep = tail.rstrip("\n") + "\n"
         path.write_text("\n".join(props + [""] + body) + keep, encoding="utf-8", newline="\n")
     (folder / "Registro de postulaciones.md").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     return folder
@@ -259,7 +272,7 @@ def cmd_list(a, t):
     rows = [(r, d) for r, d in t.rows() if not a.estado or d["estado"] == a.estado]
     for _, d in rows:
         f = to_date(d["fecha_postulacion"])
-        print(f"#{int(float(d['n'])):>3} {d['estado']:<13} {f.strftime('%d/%m') if f else '   -  '}  {str(d['empresa'])[:26]:<26} | {str(d['puesto'])[:52]:<52} | {seguimiento(d, hoy)}")
+        print(f"#{_n(d['n']):>3} {d['estado']:<13} {f.strftime('%d/%m') if f else '   -  '}  {str(d['empresa'])[:26]:<26} | {str(d['puesto'])[:52]:<52} | {seguimiento(d, hoy)}")
     print(f"\n{len(rows)} postulaciones ({t.path.name})")
 
 
@@ -268,7 +281,7 @@ def cmd_followups(a, t):
     buckets = {"follow": [], "revisar": [], "frio": [], "pendiente": [], "vencido": []}
     for _, d in t.rows():
         s = seguimiento(d, hoy)
-        line = f"#{int(float(d['n']))} {d['empresa']} · {d['puesto']} ({s})"
+        line = f"#{_n(d['n'])} {d['empresa']} · {d['puesto']} ({s})"
         if d["canal"] in ("Recomendación", "Networking") and d["referido"]:
             line += f"\n     ↳ llegó por {d['canal'].lower()}: el mensaje va a {d['referido']}, no a la empresa"
         if s.startswith(("Hacer follow-up", "Revisar")) and d["proxima_accion"]:
@@ -296,9 +309,9 @@ def cmd_add(a, t):
     for _, d in t.rows():
         same = norm(d["empresa"]) == norm(a.empresa) and (norm(d["puesto"]) == norm(a.puesto) or (a.link and a.link == d["link"]))
         if same and not a.force:
-            sys.exit(f"Ya existe: #{int(float(d['n']))} {d['empresa']} · {d['puesto']}. Usá `update` o --force.")
+            sys.exit(f"Ya existe: #{_n(d['n'])} {d['empresa']} · {d['puesto']}. Usá `update` o --force.")
     r = next((r for r in range(FIRST_ROW, t.ws.max_row + 2) if not t.ws.cell(r, t.col["empresa"]).value), None)
-    n = max([int(float(d["n"])) for _, d in t.rows() if d["n"] not in (None, "")] or [0]) + 1
+    n = max([_n(d["n"]) for _, d in t.rows() if d["n"] not in (None, "")] or [0]) + 1
     hoy = to_date(a.fecha) or dt.date.today()
     vals = dict(n=n, empresa=a.empresa, puesto=a.puesto, estado=a.estado, link=a.link, fuente=a.fuente, canal=a.canal, referido=a.referido,
                 descripcion=a.descripcion, cv=a.cv, cv_ruta=a.cv_ruta, carta=a.carta, modalidad=a.modalidad, ubicacion=a.ubicacion, jornada=a.jornada,
@@ -345,7 +358,7 @@ def cmd_update(a, t):
     for k, v in changes.items():
         t.set(r, k, v)
     t.save()
-    print(f"Actualizada #{int(float(d['n']))} {d['empresa']} · {d['puesto']}: " + ", ".join(f"{k}={str(v)[:40]}" for k, v in changes.items()))
+    print(f"Actualizada #{_n(d['n'])} {d['empresa']} · {d['puesto']}: " + ", ".join(f"{k}={str(v)[:40]}" for k, v in changes.items()))
 
 
 def build_parser():

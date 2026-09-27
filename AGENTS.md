@@ -28,7 +28,7 @@ Objetivo: conseguir una pasantía o puesto junior de IT/IA (ideal part-time 20 h
 | Radar del día (no se sube a git) | `radar\daily-AAAA-MM-DD.tsv`, `radar\seen_jobs.json`, `radar\discoveries-AAAA-MM-DD.md` |
 | **Excel oficial de seguimiento** | `C:\Users\Nacho\Documents\Busqueda laboral\Postulaciones_Ignacio_Palmeri.xlsx` |
 | Backup automático del Excel (uno, se pisa) | `C:\Users\Nacho\Documents\Busqueda laboral\backup\Postulaciones_Ignacio_Palmeri.anterior.xlsx` |
-| Script del Excel | `scripts\tracker_add.py` (agregar, actualizar, listar, follow-ups) y `scripts\tracker_xlsx.py` (regenera el Excel desde el CSV) |
+| Script del Excel | `scripts\tracker_add.py` (agregar, actualizar, listar, follow-ups) y `scripts\tracker_xlsx.py` (regenera un Excel desde el CSV; su salida por defecto va a `tracker\` del repo: **nunca apuntarlo al Excel oficial**) |
 | **Registro en Obsidian** (tabla + una nota por postulación: link, ruta exacta del CV, descripción, match, historial) | `D:\Facultad\UADE-Vault\Efforts\Trabajo\Postulaciones\` (`Registro de postulaciones.md` + `NNN Empresa - Puesto.md`); se regenera solo con cada `add`/`update`, o a mano con `tracker_add.py export-obsidian` |
 | Espejo en git del Excel | `tracker\postulaciones.csv`, `tracker\contactos.csv`; `tracker\applications.csv` es legacy |
 | CV maestro (fuente) | `CV_Material_Nacho\cv_master.yaml` → `python CV_Material_Nacho\yaml_to_md.py` → `cv_master_es.md` / `cv_master_en.md` |
