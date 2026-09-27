@@ -45,8 +45,8 @@ Objetivo: conseguir una pasantía o puesto junior de IT/IA (ideal part-time 20 h
 
 - **calendar** (conectado): Google Calendar de Nacho, calendario `primary`. Usarlo para follow-ups y fechas límite. **Siempre listar primero** los eventos que empiezan con `[Búsqueda]` para no duplicar, **mostrar la lista a Nacho y crear solo si dice que sí**, sin invitados. Formato: `[Búsqueda] Follow-up <empresa>` (día 3, 10:00, 15 min) y `[Búsqueda] Vence <empresa>` (todo el día). Nunca agendar entre 18:45 y 22:15 de lunes a viernes: es la cursada.
 - **drive** (conectado): leer archivos y, si Nacho lo pide, subir un respaldo del Excel a la carpeta "Búsqueda Laboral". El Drive está casi lleno (99 %): avisar antes de subir. El Excel local sigue siendo el registro oficial.
-- **gmail** (apagado, `enabled: false`): si Nacho lo enciende, **solo crear borradores, nunca enviar**.
-- No hay MCP de navegador. Para el portal de UADE (pide login) y X, o Nacho pega el texto, o se usa Claude in Chrome desde Claude. Instalar Playwright MCP requiere su OK (regla 8).
+- **gmail** (encendido el 2026-09-26): **solo borradores**. `send_email`, `delete_email` y `batch_delete_emails` están bloqueados por `permissions` en `opencode.json` (regla `effect: deny`), así que `tools.gmail.draft_email` es lo único que sale de la bandeja. Usar `draft_email`, `search_emails`, `read_email`. Nacho revisa y envía a mano desde Gmail.
+- **playwright** (instalado el 2026-09-26, `npx -y @playwright/mcp@latest`, herramientas `tools.playwright.browser_*`): para el portal de UADE y X. Perfil persistente: si el login venció, Nacho inicia sesión él en la ventana y se sigue. Nunca escribir contraseñas por él, nunca postular ni enviar desde el navegador (reglas 1 y 4): solo leer avisos y armar la lista.
 
 ## Flujos
 
@@ -89,6 +89,5 @@ Solo borradores. BecasIT: a `empleo@itechcareer.com` con copia a `empleoitc@gmai
 
 ## Estado y pendientes conocidos
 - Nada corre solo: la pasada arranca cuando se la pide. Programarla en Windows requiere OK de Nacho (regla 8).
-- Navegador para UADE y X: pendiente decidir si se instala el MCP de Playwright.
-- Gmail apagado a propósito.
-- Tests de integración de MCPs: `opencode mcp list` debe mostrar `calendar` y `drive` en `connected`.
+- Gmail: solo borradores (envío y borrado bloqueados en `opencode.json`). Si se agrega otro MCP de mail, repetir el bloqueo.
+- Tests de integración de MCPs: `opencode mcp list` (correrlo desde `D:\Dev\jsrepo`) debe mostrar `calendar`, `drive`, `gmail` y `playwright` en `connected`.
