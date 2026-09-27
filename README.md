@@ -6,12 +6,14 @@ Porting local del framework `MadsLorentzen/ai-job-search` adaptado al stack de N
 
 ```
 job-search/
+├── AGENTS.md                   # FLUJO CANÓNICO para agentes (OpenCode, Claude Code, etc.)
 ├── profile.md                  # perfil profesional (fuente de verdad)
 ├── rubric-fit.md               # rúbrica de evaluación (5 dimensiones + deal-breakers)
 ├── portales-argentina.md       # portales investigados (ago 2026) + notas técnicas
 ├── scripts/
 │   ├── buscar_portales.py      # scraper unificado (11 fuentes: LinkedIn, Cosign, Startups AR, YC, Speedrun, Get on Board, Torre, Computrabajo, BecasIT, EmpleosIT, Bumeran)
-│   ├── tracker_xlsx.py         # genera el Excel/Google Sheet de seguimiento desde tracker/*.csv
+│   ├── tracker_xlsx.py         # genera el Excel de seguimiento desde tracker/*.csv
+│   ├── tracker_add.py          # agrega/actualiza postulaciones en el Excel de Nacho (+ espejo CSV, backup, follow-ups)
 │   └── prompts/
 │       └── agente-libre.md     # prompt canónico del agente de búsqueda web libre
 ├── radar/
@@ -23,7 +25,7 @@ job-search/
     └── applications.csv        # legacy: radar + postulaciones hasta 26/09/2026
 ```
 
-La skill de OpenCode que orquesta todo: `.opencode/skills/job-search/SKILL.md`.
+**Fuente canónica del flujo: [`AGENTS.md`](AGENTS.md)** (reglas, mapa de rutas, MCPs y los 5 flujos). En OpenCode se usa con `/busqueda`, `/cv`, `/postule` y `/seguimiento` (comandos en `~/.config/opencode/command/`) y la skill global `job-search` (`~/.agents/skills/job-search/SKILL.md`); ambos solo apuntan a `AGENTS.md`. Claude Code y cualquier otro agente leen el mismo archivo.
 
 ## Rutina diaria (1 comando + agentes)
 

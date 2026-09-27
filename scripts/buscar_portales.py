@@ -1,7 +1,9 @@
 import argparse
+import csv
 import json
 import re
 import sys
+import unicodedata
 import urllib.request
 import webbrowser
 import xml.etree.ElementTree as ET
@@ -47,7 +49,8 @@ EMPLEOSIT_RSS = "https://www.empleosit.com.ar/rss/"
 
 RADAR_DIR = Path(__file__).resolve().parent.parent / "radar"
 SEEN_FILE = RADAR_DIR / "seen_jobs.json"
-TSV_HEADER = "fecha|portal|titulo|empresa|ubicacion|modalidad|jornada|estado|url|nuevo"
+TSV_HEADER = "portal|fecha|titulo|empresa|ubicacion|modalidad|jornada|estado|url|nuevo|tracker"
+TRACKER_CSV = Path(__file__).resolve().parent.parent / "tracker" / "postulaciones.csv"
 
 UA = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
@@ -74,6 +77,53 @@ def _get(url):
 
 def _clean(text):
     return re.sub(r"\s+", " ", unescape(text)).strip()
+
+
+# --- Cruce contra el tracker de Nacho (tracker/postulaciones.csv): empresa + puesto, nunca solo la empresa ---
+_TRK_STOP = {"argentina", "group", "inc", "llc", "ltd", "company", "the", "and", "remote", "latam"}
+
+
+def _norm(s):
+    s = unicodedata.normalize("NFKD", str(s or "")).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]+", " ", s).strip()
+
+
+def _tokens(s):
+    return {t for t in _norm(s).split() if len(t) >= 4 and t not in _TRK_STOP}
+
+
+def _load_tracker():
+    """Postulaciones ya registradas (enviadas o descartadas a proposito). 'Para postular' no cuenta: todavia no se mando."""
+    out = []
+    if not TRACKER_CSV.exists():
+        return out
+    with TRACKER_CSV.open(encoding="utf-8", newline="") as fh:
+        for r in csv.DictReader(fh):
+            est = (r.get("estado") or "").strip()
+            if est in ("", "Para postular"):
+                continue
+            out.append((_tokens(r.get("empresa")), _norm(r.get("puesto")),
+                        (r.get("link") or "").split("?")[0].strip().lower(),
+                        "DESCARTADA" if est == "Descartada" else "POSTULADA"))
+    return out
+
+
+def _tracker_mark(job, tracker):
+    """'POSTULADA' / 'DESCARTADA' si ese aviso exacto ya esta en el tracker; '' si es nuevo para Nacho.
+    Igual URL = seguro. Si no, misma empresa (token en comun) Y mismo puesto (igual, prefijo de 3+ palabras, o 80% de palabras en comun)."""
+    url = (job.get("url") or "").split("?")[0].strip().lower()
+    emp, tit = _tokens(job.get("empresa")), _norm(job.get("titulo"))
+    for toks, puesto, link, label in tracker:
+        if url and link and url == link:
+            return label
+        if not (emp & toks) or not tit or not puesto:
+            continue
+        short, long_ = sorted((tit, puesto), key=len)
+        wa, wb = set(tit.split()), set(puesto.split())
+        # palabras completas: "Analista BI" vs "Analista IA" NO es el mismo aviso (por letras se parecerian)
+        if tit == puesto or (len(short.split()) >= 3 and long_.startswith(short)) or len(wa & wb) / len(wa | wb) >= 0.8:
+            return label
+    return ""
 
 
 def _seen_key(job):
@@ -106,11 +156,11 @@ def _emit(portal, jobs, tsv_path=None):
         tsv_path.parent.mkdir(parents=True, exist_ok=True)
         with tsv_path.open("a", encoding="utf-8") as fh:
             for j in jobs:
-                row = [j.get(k, "") for k in ["fecha", "titulo", "empresa", "ubicacion", "modalidad", "jornada", "estado", "url", "nuevo"]]
+                row = [j.get(k, "") for k in ["fecha", "titulo", "empresa", "ubicacion", "modalidad", "jornada", "estado", "url", "nuevo", "tracker"]]
                 row = [str(v).replace("|", "/") for v in row]
                 fh.write(f"{portal}|" + "|".join(row) + "\n")
     for j in jobs:
-        print(f"{portal} | {j['titulo']} | {j['empresa']} | {j['ubicacion']} | {j['fecha']} | {j['modalidad']} | {j['jornada']} | {j['estado']} | {j['url']} | {j.get('nuevo','')}")
+        print(f"{portal} | {j['titulo']} | {j['empresa']} | {j['ubicacion']} | {j['fecha']} | {j['modalidad']} | {j['jornada']} | {j['estado']} | {j['url']} | {j.get('nuevo','')} | {j.get('tracker','')}")
 
 
 def scrape_linkedin(kw):
@@ -588,6 +638,7 @@ def main():
             tsv_path = RADAR_DIR / f"daily-{date.today().isoformat()}.tsv"
             tsv_path.write_text(TSV_HEADER + "\n", encoding="utf-8")
         # "all" = fuentes que funcionan sin login. Wellfound (SPA) queda fuera; UADE y X se revisan en el navegador.
+        tracker = _load_tracker()
         selected = ["linkedin", "cosign", "startups", "yc", "speedrun", "getonbrd", "torre", "computrabajo", "becasit", "empleosit", "telegram", "bumeran", "uade"] if args.scrape == "all" else [args.scrape]
         for name in selected:
             print(f"## {name.capitalize()}")
@@ -671,6 +722,8 @@ def main():
                 if args.new:
                     jobs = [j for j in jobs if j["nuevo"] == "NUEVO"]
                     print(f"[--new] {name}: {len(jobs)} sin ver de {len(seen)} conocidos\n")
+            for j in jobs:
+                j["tracker"] = _tracker_mark(j, tracker)
             _emit(name, jobs, tsv_path)
         if args.write:
             _save_seen(seen)
