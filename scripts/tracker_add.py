@@ -9,8 +9,11 @@ Uso (Python del venv, que tiene openpyxl):
   D:\\Dev\\wenv\\Scripts\\python.exe scripts\\tracker_add.py add --empresa X --puesto Y --link URL --fuente LinkedIn --cv archivo.pdf
   D:\\Dev\\wenv\\Scripts\\python.exe scripts\\tracker_add.py update 12 --estado Entrevista --log "Me escribio la recruiter"
   D:\\Dev\\wenv\\Scripts\\python.exe scripts\\tracker_add.py export-csv
+  D:\\Dev\\wenv\\Scripts\\python.exe scripts\\tracker_add.py export-obsidian   (regenera el registro en el vault)
 
 Con el Excel abierto en Excel el archivo esta bloqueado: el script avisa y no escribe.
+Cada add/update/export-csv regenera tambien el registro en Obsidian (tabla + una nota por postulacion).
+Carpeta: --obsidian-dir, o la variable OBSIDIAN_DIR, o la ruta por defecto de abajo; --no-obsidian lo omite.
 Ruta del Excel: --xlsx, o la variable TRACKER_XLSX, o la ruta por defecto de abajo.
 """
 import argparse, csv, datetime as dt, os, re, shutil, sys, unicodedata
@@ -27,6 +30,8 @@ sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_XLSX = r"C:\Users\Nacho\Documents\Busqueda laboral\Postulaciones_Ignacio_Palmeri.xlsx"
 CSV_PATH = ROOT / "tracker" / "postulaciones.csv"
+DEFAULT_OBSIDIAN = r"D:\Facultad\UADE-Vault\Efforts\Trabajo\Postulaciones"
+AUTO_START, AUTO_END = "<!-- job-search:auto -->", "<!-- /job-search:auto -->"
 SHEET, HDR_ROW, FIRST_ROW = "Postulaciones", 3, 4
 
 # clave interna -> encabezado de la hoja Postulaciones (el orden del CSV espejo es el de esta lista)
@@ -149,6 +154,86 @@ class Tracker:
         return CSV_PATH
 
 
+def _md(v):
+    return str(v).replace("|", "\\|").replace("\n", " ").strip() if v not in (None, "") else ""
+
+
+def _yq(v):
+    """Valor seguro dentro de comillas dobles de YAML (frontmatter)."""
+    return str(v if v is not None else "").replace("\\", "/").replace('"', "'").replace("\n", " ").strip()
+
+
+def _fname(d):
+    base = f"{int(float(d['n'])):03d} {d['empresa']} - {d['puesto']}"
+    return re.sub(r"\s+", " ", re.sub(r'[\\/:*?"<>|#^\[\]]', " ", base)).strip()[:110]
+
+
+def _file_link(path):
+    p = str(path or "").strip()
+    if re.match(r"^[A-Za-z]:[\\/]", p):
+        return f"[{Path(p).name}](<file:///{p.replace(chr(92), '/')}>)"
+    return p
+
+
+def _fit(v):
+    try:
+        n = round(float(v))
+        return f"{'★' * n}{'☆' * (5 - n)} ({float(v):g}/5)"
+    except (TypeError, ValueError):
+        return ""
+
+
+def export_obsidian(t, folder):
+    """Tabla resumen + una nota por postulacion. Lo generado va entre marcadores; lo que Nacho escriba fuera de ellos se conserva."""
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    hoy = dt.date.today()
+    rows = sorted(t.rows(), key=lambda x: -int(float(x[1]["n"] or 0)))
+    lines = ["---", "tipo: registro", "area: trabajo", f"actualizado: {hoy.isoformat()}",
+             "fuente: Excel Postulaciones_Ignacio_Palmeri.xlsx (generado por scripts/tracker_add.py)", "---", "",
+             "# Registro de postulaciones", "",
+             f"Generado automáticamente desde el Excel ({len(rows)} postulaciones, {hoy.strftime('%d/%m/%Y')}). No lo edites a mano: editá el Excel o la nota de cada postulación (debajo de la marca).", "",
+             "**Por estado:** " + " · ".join(f"{e} {n}" for e, n in ((e, sum(1 for _, d in rows if d["estado"] == e)) for e in ESTADOS) if n)
+             + " — **Por fuente:** " + " · ".join(f"{f} {n}" for f, n in sorted(((f, sum(1 for _, d in rows if (d["fuente"] or "?") == f)) for f in {(d["fuente"] or "?") for _, d in rows}), key=lambda x: -x[1])[:6]), "",
+             "| N° | Empresa | Puesto | Estado | Seguimiento | Postulé | Match | CV usado | Ruta del CV | Aviso | Dónde | Canal |",
+             "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    for _, d in rows:
+        f = to_date(d["fecha_postulacion"])
+        note = _fname(d)
+        link = f"[aviso]({d['link']})" if str(d["link"] or "").startswith("http") else _md(d["link"])
+        lines.append("| " + " | ".join([str(int(float(d["n"]))), _md(d["empresa"]), f"[[{note}\\|{_md(d['puesto'])}]]", _md(d["estado"]), seguimiento(d, hoy),
+                                        f.strftime("%d/%m/%y") if f else "", _fit(d["fit"]), _md(d["cv"]), _file_link(d["cv_ruta"]), link, _md(d["fuente"]), _md(d["canal"])]) + " |")
+        props = ["---", "tipo: postulacion", f"n: {int(float(d['n']))}", f"empresa: \"{_yq(d['empresa'])}\"", f"puesto: \"{_yq(d['puesto'])}\"",
+                 f"estado: {_yq(d['estado'])}", f"fecha_postulacion: {(f.isoformat() if f else '')}", f"fit: {d['fit'] if d['fit'] not in (None, '') else ''}",
+                 f"link: \"{_yq(d['link'])}\"", f"cv: \"{_yq(d['cv'])}\"", f"cv_ruta: \"{_yq(d['cv_ruta'])}\"", "---"]
+        lim = to_date(d["fecha_limite"])
+        body = [AUTO_START, f"# {d['empresa']} · {d['puesto']}", "",
+                f"- **Estado:** {d['estado']} · **Seguimiento:** {seguimiento(d, hoy)}",
+                f"- **Aviso:** {d['link'] or '-'}",
+                f"- **Dónde la encontré:** {d['fuente'] or '-'} · **Canal:** {d['canal'] or '-'}" + (f" · **Recomendado por:** {d['referido']}" if d["referido"] else ""),
+                f"- **Match (fit):** {_fit(d['fit']) or '-'} · **Prioridad:** {d['prioridad'] or '-'}",
+                f"- **CV usado:** {d['cv'] or '-'} → {_file_link(d['cv_ruta']) or '-'}",
+                f"- **Modalidad / ubicación / jornada:** {d['modalidad'] or '-'} / {d['ubicacion'] or '-'} / {d['jornada'] or '-'} · **Remuneración:** {d['remuneracion'] or '-'}",
+                f"- **Área:** {d['area'] or '-'} · **Fecha límite:** {lim.strftime('%d/%m/%Y') if lim else '-'}",
+                f"- **Contacto:** {' · '.join(str(x) for x in (d['contacto_nombre'], d['contacto_cargo'], d['contacto_email']) if x) or '-'}",
+                f"- **Etapa / resultado:** {d['etapa'] or '-'} · **Próxima acción:** {d['proxima_accion'] or '-'}"]
+        for title, key in (("Descripción del puesto", "descripcion"), ("Mensaje o carta", "carta"), ("Historial", "historial"), ("Notas", "notas"), ("Motivo de cierre", "motivo_cierre")):
+            if d[key]:
+                body += ["", f"## {title}", "", str(d[key]).strip()]
+        body.append(AUTO_END)
+        path = folder / f"{note}.md"
+        keep = "\n\n## Mis apuntes\n\n"
+        if path.exists():
+            old = path.read_text(encoding="utf-8")
+            if AUTO_END in old:
+                tail = old.split(AUTO_END, 1)[1]
+                if tail.strip():
+                    keep = tail.rstrip("\n") + "\n"
+        path.write_text("\n".join(props + [""] + body) + keep, encoding="utf-8", newline="\n")
+    (folder / "Registro de postulaciones.md").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+    return folder
+
+
 def seguimiento(d, hoy):
     """Misma regla que la columna 'Seguimiento' del Excel."""
     est = d["estado"]
@@ -267,9 +352,11 @@ def build_parser():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--xlsx", default=os.environ.get("TRACKER_XLSX", DEFAULT_XLSX))
     p.add_argument("--no-csv", action="store_true", help="no actualizar el espejo tracker/postulaciones.csv")
+    p.add_argument("--no-obsidian", action="store_true", help="no regenerar el registro en Obsidian")
+    p.add_argument("--obsidian-dir", default=os.environ.get("OBSIDIAN_DIR", DEFAULT_OBSIDIAN))
     sub = p.add_subparsers(dest="cmd", required=True)
     l = sub.add_parser("list"); l.add_argument("--estado")
-    sub.add_parser("followups"); sub.add_parser("export-csv")
+    sub.add_parser("followups"); sub.add_parser("export-csv"); sub.add_parser("export-obsidian")
     a = sub.add_parser("add")
     a.add_argument("--empresa", required=True); a.add_argument("--puesto", required=True)
     a.add_argument("--estado", default="Postulada"); a.add_argument("--fecha", help="AAAA-MM-DD (default hoy)")
@@ -292,9 +379,14 @@ def build_parser():
 def main():
     a = build_parser().parse_args()
     t = Tracker(a.xlsx)
-    {"list": cmd_list, "followups": cmd_followups, "add": cmd_add, "update": cmd_update, "export-csv": lambda a, t: None}[a.cmd](a, t)
+    {"list": cmd_list, "followups": cmd_followups, "add": cmd_add, "update": cmd_update, "export-csv": lambda a, t: None, "export-obsidian": lambda a, t: None}[a.cmd](a, t)
     if a.cmd in ("add", "update", "export-csv") and not a.no_csv:
         print("Espejo CSV:", t.export_csv())
+    if a.cmd in ("add", "update", "export-csv", "export-obsidian") and not a.no_obsidian:
+        try:
+            print("Registro Obsidian:", export_obsidian(t, a.obsidian_dir))
+        except OSError as e:
+            print(f"AVISO: no pude escribir el registro en Obsidian ({e}). El Excel quedó bien.")
 
 
 if __name__ == "__main__":

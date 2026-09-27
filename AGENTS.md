@@ -29,6 +29,7 @@ Objetivo: conseguir una pasantía o puesto junior de IT/IA (ideal part-time 20 h
 | **Excel oficial de seguimiento** | `C:\Users\Nacho\Documents\Busqueda laboral\Postulaciones_Ignacio_Palmeri.xlsx` |
 | Backup automático del Excel (uno, se pisa) | `C:\Users\Nacho\Documents\Busqueda laboral\backup\Postulaciones_Ignacio_Palmeri.anterior.xlsx` |
 | Script del Excel | `scripts\tracker_add.py` (agregar, actualizar, listar, follow-ups) y `scripts\tracker_xlsx.py` (regenera el Excel desde el CSV) |
+| **Registro en Obsidian** (tabla + una nota por postulación: link, ruta exacta del CV, descripción, match, historial) | `D:\Facultad\UADE-Vault\Efforts\Trabajo\Postulaciones\` (`Registro de postulaciones.md` + `NNN Empresa - Puesto.md`); se regenera solo con cada `add`/`update`, o a mano con `tracker_add.py export-obsidian` |
 | Espejo en git del Excel | `tracker\postulaciones.csv`, `tracker\contactos.csv`; `tracker\applications.csv` es legacy |
 | CV maestro (fuente) | `CV_Material_Nacho\cv_master.yaml` → `python CV_Material_Nacho\yaml_to_md.py` → `cv_master_es.md` / `cv_master_en.md` |
 | CVs a medida | `CV_Material_Nacho\extras\cvs_personalizados\cv_<slug>.md` → PDF/DOCX `Ignacio_Palmeri_<Slug>.*` |
@@ -63,11 +64,12 @@ Objetivo: conseguir una pasantía o puesto junior de IT/IA (ideal part-time 20 h
 2. **Solo reordenar y enfocar** perfil, proyectos y skills que ya existen. Aplicar las reglas 1 y 2. Línea de inglés exacta: `English: B1 (intermediate), self-assessed, not formally certified. I read technical documentation in English.` / `Inglés: B1 (intermedio), autoevaluado, sin certificación formal. Leo documentación técnica en inglés.`
 3. `D:\Dev\wenv\Scripts\python.exe CV_Material_Nacho\extras\generate_cv_files.py` **regenera todos los PDF/DOCX**: dejar solo los del CV nuevo y revertir el resto con `git checkout -- <archivos>`.
 4. `D:\Dev\wenv\Scripts\python.exe scripts\validate_ats.py --all` debe dar 0 FAIL. Comprobar que el PDF contenga B1 y ninguna de estas palabras: `B1+`, `B2`, `fluent`, `fluido`, `bilingu`, `advanced English`, `C1`.
-5. Copiar el PDF a `D:\Dev\postulaciones_2026-09-25\PARA_ENVIAR\`. Commit en rama y push. Decir a Nacho qué le falta según el aviso (gaps) y qué responder en el formulario.
+5. Copiar el PDF a `D:\Dev\postulaciones_2026-09-25\PARA_ENVIAR\` y anotar su **ruta absoluta** (va en `--cv-ruta` al registrar). Commit en rama y push. Decir a Nacho qué le falta según el aviso (gaps) y qué responder en el formulario.
 
 ### C. Registrar una postulación (`/postule <empresa> ...`)
 Solo cuando Nacho confirma que **ya postuló**. Con el Excel cerrado:
 `D:\Dev\wenv\Scripts\python.exe scripts\tracker_add.py add --empresa "..." --puesto "..." --link URL --fuente LinkedIn --cv archivo.pdf --fit 4.1 --prioridad Alta --descripcion "..." ...`
+**Registro completo (obligatorio, en Claude Code y en OpenCode):** cada postulación se carga con `--link`, `--fuente`, `--cv` (nombre), `--cv-ruta` (ruta absoluta del PDF), `--descripcion` (qué hace el puesto, requisitos, stack), `--fit` (match 1-5) y en `--notas` el porqué del match (qué calza y qué falta) más modalidad/jornada/remuneración si constan. El script regenera solo el registro de Obsidian (`Registro de postulaciones.md` y la nota de la postulación); verificar que la nota exista. Lo que Nacho escriba en "Mis apuntes" (debajo de la marca `<!-- /job-search:auto -->`) se conserva. Notion: solo si Nacho lo pide y únicamente desde Claude Code (OpenCode no tiene ese MCP); la fuente sigue siendo el Excel.
 Cambios de estado: `tracker_add.py update <N°> --estado Entrevista --log "qué pasó"`. El script rechaza duplicados, valida estados, hace backup y actualiza `tracker\postulaciones.csv`. **Si el Excel está abierto avisa y no escribe**: pedirle a Nacho que lo cierre. Después commitear el CSV en una rama.
 
 ### D. Seguimiento (`/seguimiento`)
@@ -80,7 +82,7 @@ Solo borradores. BecasIT: a `empleo@itechcareer.com` con copia a `empleoitc@gmai
 
 ## Verificación antes de dar algo por hecho
 - Scraper: termina sin `Traceback`; cada fuente imprime su conteo; `radar\daily-<hoy>.tsv` existe.
-- Excel: después de `add`/`update`, `tracker_add.py list` muestra la fila; el CSV cambió.
+- Excel: después de `add`/`update`, `tracker_add.py list` muestra la fila; el CSV cambió y existe la nota en `...\Efforts\Trabajo\Postulaciones\`.
 - CVs: `validate_ats.py --all` en 0 FAIL y texto del PDF revisado.
 - Git: `git status` limpio, rama pusheada, CI verde; sin secretos en el diff.
 - No decir "listo" sin haber corrido el comando y mirado la salida.
