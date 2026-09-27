@@ -81,7 +81,7 @@ def _clean(text):
 
 
 # --- Cruce contra el tracker de Nacho (tracker/postulaciones.csv): empresa + puesto, nunca solo la empresa ---
-_TRK_STOP = {"argentina", "group", "inc", "llc", "ltd", "company", "the", "and", "remote", "latam"}
+_TRK_STOP = {"argentina", "group", "inc", "llc", "ltd", "srl", "sas", "company", "the", "and", "for", "remote", "latam", "labs", "tech"}
 
 
 def _norm(s):
@@ -90,7 +90,12 @@ def _norm(s):
 
 
 def _tokens(s):
-    return {t for t in _norm(s).split() if len(t) >= 4 and t not in _TRK_STOP}
+    return {t for t in _norm(s).split() if len(t) >= 3 and t not in _TRK_STOP}   # >=3: entran IBM, SAP, ABB
+
+
+def _same_company(a_tokens, b_tokens):
+    """Misma empresa aunque el nombre varie: 'JPMorgan' vs 'JPMorganChase' (prefijo de 5+ letras) o palabra en comun."""
+    return any(x == y or (min(len(x), len(y)) >= 5 and (x.startswith(y) or y.startswith(x))) for x in a_tokens for y in b_tokens)
 
 
 def _load_tracker():
@@ -117,7 +122,7 @@ def _tracker_mark(job, tracker):
     for toks, puesto, link, label in tracker:
         if url and link and url == link:
             return label
-        if not (emp & toks) or not tit or not puesto:
+        if not _same_company(emp, toks) or not tit or not puesto:
             continue
         short, long_ = sorted((tit, puesto), key=len)
         wa, wb = set(tit.split()), set(puesto.split())
