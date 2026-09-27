@@ -7,6 +7,7 @@ import unicodedata
 import urllib.request
 import webbrowser
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from html import unescape
 from pathlib import Path
@@ -450,22 +451,30 @@ def scrape_getonbrd(pages=2):
 
 def scrape_torre(pages=3):
     """Torre (torre.ai): API de busqueda publica por POST (search.torre.co). Maximo size=20 por pedido
-    (con mas devuelve 400), se pagina con offset. Solo abiertas, AR o remoto anywhere/LatAm."""
+    (con mas devuelve 400), se pagina con offset. Solo abiertas, AR o remoto anywhere/LatAm.
+    Las 9 busquedas van en paralelo: en serie tardaban ~70 s y hacian que el shell de un agente pasara el comando a segundo plano."""
     queries = ["pasante", "pasantia", "intern", "trainee", "junior", "python", "soporte", "qa", "analista de datos"]
     jobs, seen_ids = [], set()
-    results = []
-    for q in queries:
+
+    def one_query(q):
         payload = {"and": [{"keywords": {"term": q, "locale": "es"}}]}  # la API no acepta filtro de estado: se filtra abajo
-        for p in range(pages):
+        got = []
+        for pg in range(pages):
             try:
-                data = _post_json(f"https://search.torre.co/opportunities/_search/?size=20&offset={p * 20}&lang=es", payload)
+                data = _post_json(f"https://search.torre.co/opportunities/_search/?size=20&offset={pg * 20}&lang=es", payload)
             except Exception as e:
                 print(f"WARN torre q={q}: {e}", file=sys.stderr)
                 break
             batch = data.get("results") or []
-            results.extend(batch)
+            got.extend(batch)
             if len(batch) < 20:
                 break
+        return got
+
+    results = []
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        for batch in pool.map(one_query, queries):
+            results.extend(batch)
     for r in results:
         oid = r.get("id")
         if not oid or oid in seen_ids:
