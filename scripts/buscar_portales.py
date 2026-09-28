@@ -194,29 +194,43 @@ def scrape_linkedin(kw):
 # --- Filtros de relevancia para fuentes grandes (Startups Argentina / YC / Speedrun) ---
 # Regla v3 (25/09/2026): full-time YA NO es veto. Se descarta solo por seniority claramente alto.
 _SENIOR_RE = re.compile(r"\b(senior|sr\.?|staff|principal|lead|leader|head|director|vp|manager|architect|cto|cfo|chief|ssr|semi[- ]?senior|expert|ii|iii|iv)\b", re.I)
+# Regla v4 (28/09/2026): lo que manda es "sin experiencia" (intern/trainee/junior) y que acepte Argentina.
+# Una palabra de entrada en el titulo gana sobre la de seniority ("Product Manager Intern", "Jr. Team Lead" pasan).
+_ENTRY_RE = re.compile(r"(intern|pasant|junior|\bjr\b|trainee|becari|practicante|entry|new grad|graduate|apprentic|"
+                       r"fellow|early career|emerging talent|j[oó]venes|estudiante|student|sin experiencia|primer empleo)", re.I)
 _ENTRY_TECH_RE = re.compile(
-    r"(intern|pasant|junior|\bjr\b|trainee|becari|practicante|entry|new grad|graduate|apprentic|"
+    _ENTRY_RE.pattern[:-1] + r"|"
     r"support|soporte|help ?desk|\bqa\b|tester|test |data|datos|python|automat|\bai\b|\bia\b|\bml\b|prompt|"
     r"sistemas|developer|desarrollador|engineer|software|implementation|onboarding|"
-    r"customer success|technical|it operations|devops)", re.I)
+    r"customer success|technical|it operations|devops|"
+    r"analyst|analista|operations|operaciones|\bops\b|growth|research|business|associate|asistente|assistant|"
+    r"no.?code|low.?code|zapier|n8n|llm|gpt|agent|agente|crm|\bbi\b|product)", re.I)
+
+
+def _is_senior(title):
+    t = title or ""
+    return bool(_SENIOR_RE.search(t)) and not _ENTRY_RE.search(t)
 
 
 def _relevant(title):
     t = title or ""
-    return bool(_ENTRY_TECH_RE.search(t)) and not _SENIOR_RE.search(t)
+    return bool(_ENTRY_TECH_RE.search(t)) and not _is_senior(t)
 
 
-# Para agregadores masivos (Cosign, Torre, Get on Board) "intern"/"junior" solo no alcanza: tiene que ser tech/ops tecnico.
+# Para agregadores masivos (Cosign, Torre, Get on Board) "intern"/"junior" solo no alcanza: tiene que ser tech/ops tecnico,
+# pero se acepta tambien ops/analista/growth/research: es el tipo de rol de entrada que Nacho puede tomar.
 _TECH_RE = re.compile(
     r"(support|soporte|help ?desk|\bqa\b|tester|testing|data|datos|python|automat|\bai\b|\bia\b|\bml\b|machine learning|prompt|"
     r"sistemas|developer|desarrollador|engineer|ingenier|software|programad|implementation|implementaci|onboarding|"
     r"customer success|technical|t[eé]cnic|\bit\b|tecnolog|devops|cloud|backend|frontend|full.?stack|analytics|analista|"
-    r"product|security|seguridad|infra|network|redes|sql|web)", re.I)
+    r"product|security|seguridad|infra|network|redes|sql|web|"
+    r"analyst|operations|operaciones|\bops\b|growth|research|business|no.?code|low.?code|zapier|n8n|llm|gpt|agent|agente|"
+    r"crm|\bbi\b|excel|process|proceso|solutions|customer|cx\b|digital)", re.I)
 
 
 def _tech_entry(title, entry_hint=False):
     t = title or ""
-    if _SENIOR_RE.search(t) or not _TECH_RE.search(t):
+    if _is_senior(t) or not _TECH_RE.search(t):
         return False
     return entry_hint or _relevant(t)
 
@@ -263,6 +277,7 @@ def scrape_startupsargentina(max_pages=40, only_relevant=True):
             seen_ids.add(jid)
             found += 1
             title, company, loc = _clean(title), _clean(company), _clean(loc)
+            # Startups Argentina ya es 100% Argentina: filtro amplio (v4), saca senior y lo que no es tech/ops/datos/analista.
             if only_relevant and not _relevant(title):
                 continue
             jobs.append({
@@ -306,7 +321,7 @@ def scrape_yc(only_relevant=True):
                 continue
             if only_relevant and not (is_intern or _relevant(title)):
                 continue
-            if _SENIOR_RE.search(title):
+            if _is_senior(title):
                 continue
             jobs.append({
                 "fecha": "", "titulo": title, "empresa": f"{company} ({batch})" if batch else company,
@@ -342,7 +357,7 @@ def scrape_speedrun(pages=3):
                     continue
                 if not _remote_ok(loc):
                     continue
-                if j.get("seniority") in ("senior", "staff", "exec", "director", "vp") or _SENIOR_RE.search(title):
+                if j.get("seniority") in ("senior", "staff", "exec", "director", "vp") or _is_senior(title):
                     continue
                 jobs.append({
                     "fecha": (j.get("published_at") or "")[:10], "titulo": title, "empresa": j.get("company_key", ""),
@@ -370,7 +385,8 @@ def scrape_cosign(pages=3):
     intern/junior remoto, y filtramos entry/tech + ubicacion alcanzable desde AR."""
     endpoint = "https://cheerful-donkey-418.convex.cloud/api/action"
     searches = [("Argentina", False), ("Buenos Aires", False), ("LATAM", True),
-                ("intern", True), ("junior", True), ("trainee", False), ("pasantia", False)]
+                ("intern", True), ("junior", True), ("trainee", False), ("pasantia", False),
+                ("entry level", True), ("new grad", True), ("fellowship", False), ("analyst", True)]
     jobs, seen_ids = [], set()
     for term, remote_only in searches:
         cursor = None
@@ -414,7 +430,8 @@ def scrape_cosign(pages=3):
 
 def scrape_getonbrd(pages=2):
     """Get on Board via API publica v0 (/api/v0/search/jobs). Seniority 1=sin experiencia, 2=junior."""
-    queries = ["practicante", "pasantia", "trainee", "junior", "intern", "soporte", "qa", "python", "datos"]
+    queries = ["practicante", "pasantia", "trainee", "junior", "intern", "soporte", "qa", "python", "datos",
+               "analista", "operaciones", "automatizacion", "inteligencia artificial", "no code"]
     jobs, seen_urls = [], set()
     for q in queries:
         for page in range(1, pages + 1):
@@ -458,7 +475,8 @@ def scrape_torre(pages=3):
     """Torre (torre.ai): API de busqueda publica por POST (search.torre.co). Maximo size=20 por pedido
     (con mas devuelve 400), se pagina con offset. Solo abiertas, AR o remoto anywhere/LatAm.
     Las 9 busquedas van en paralelo: en serie tardaban ~70 s y hacian que el shell de un agente pasara el comando a segundo plano."""
-    queries = ["pasante", "pasantia", "intern", "trainee", "junior", "python", "soporte", "qa", "analista de datos"]
+    queries = ["pasante", "pasantia", "intern", "trainee", "junior", "python", "soporte", "qa", "analista de datos",
+               "operaciones", "automatizacion", "inteligencia artificial", "entry level"]
     jobs, seen_ids = [], set()
 
     def one_query(q):
