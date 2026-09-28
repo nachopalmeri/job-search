@@ -248,6 +248,63 @@ def _remote_ok(loc):
     return bool(re.fullmatch(r"remote|remoto|remote \(worldwide\)|anywhere", l, re.I))
 
 
+# --- Filtro anti-estafas (28/09/2026) ---
+# Se aplica a TODAS las fuentes antes de escribir el TSV. Lo descartado va a radar/estafas-<fecha>.tsv
+# para poder revisarlo, nunca al reporte. Lista negra editable en scripts/estafas.txt.
+ESTAFAS_FILE = Path(__file__).resolve().parent / "estafas.txt"
+_SCAM_TITLE_RE = re.compile(
+    r"(paid survey|encuestas? pagas?|focus group|panel(ista)?s? de|mystery shopper|cliente oculto|"
+    r"earn (up to|\$)|gan[aá] (hasta|desde) \$|ingresos? extra|dinero r[aá]pido|work from home.*\$|"
+    r"sin experiencia.*\$\s?\d{3,}.*(d[ií]a|hora)|data entry.*(remote|remoto).*\$|"
+    r"(crypto|cripto|forex) (trad|invers|invest)|trading (assistant|trainee)|trader trainee|"
+    r"reshipp|package (handler|forward)|reenv[ií]o de paquetes|payment (processing )?agent|agente de pagos|"
+    r"money transfer|transferencias? de dinero|"
+    r"pag[aá] (la|tu) capacitaci|training fee|registration fee|inscripci[oó]n paga|"
+    r"multinivel|mlm|network marketing|"
+    r"(contact|escrib|envi[aá]).{0,25}(whats ?app|telegram))", re.I)
+_SCAM_URL_RE = re.compile(r"(bit\.ly|tinyurl|t\.me/|wa\.me/|chat\.whatsapp|forms\.gle|linktr\.ee|\.(xyz|top|click|icu)(/|$))", re.I)
+
+
+def _load_scam_list():
+    try:
+        lines = ESTAFAS_FILE.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    return [l.strip().lower() for l in lines if l.strip() and not l.lstrip().startswith("#")]
+
+
+def _scam_reason(j, blocklist):
+    """Motivo si el aviso es una estafa probable; '' si pasa. Solo senales fuertes: ante la duda pasa y se lee a mano."""
+    empresa = (j.get("empresa") or "").strip()
+    url = j.get("url") or ""
+    hay = f"{empresa} {url}".lower()
+    for b in blocklist:
+        if b in hay:
+            return f"lista negra: {b}"
+    if _SCAM_TITLE_RE.search(j.get("titulo") or ""):
+        return "titulo con patron de estafa"
+    if _SCAM_URL_RE.search(url):
+        return "link acortado, de mensajeria o dominio de riesgo"
+    # Torre y Get on Board permiten avisos sin empresa: sin empresa identificable no se puede verificar nada.
+    if j.get("estado") in ("Torre", "GetOnBoard") and not empresa:
+        return "sin empresa identificable"
+    return ""
+
+
+def _filter_scams(jobs, portal, blocklist, out_path=None):
+    ok, bad = [], []
+    for j in jobs:
+        why = _scam_reason(j, blocklist)
+        (bad if why else ok).append((j, why))
+    if bad:
+        print(f"  -> {portal}: {len(bad)} descartados por posible estafa")
+        if out_path:
+            with out_path.open("a", encoding="utf-8") as f:
+                for j, why in bad:
+                    f.write("|".join([portal, why, j.get("titulo", ""), j.get("empresa", ""), j.get("url", "")]) + "\n")
+    return [j for j, _ in ok]
+
+
 def _get_json(url):
     """Speedrun (Cloudflare) rechaza el UA completo del script pero acepta uno simple."""
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"})
@@ -671,6 +728,11 @@ def main():
             tsv_path.write_text(TSV_HEADER + "\n", encoding="utf-8")
         # "all" = fuentes que funcionan sin login. Wellfound (SPA) queda fuera; UADE y X se revisan en el navegador.
         tracker = _load_tracker()
+        blocklist = _load_scam_list()
+        scam_path = None
+        if args.write:
+            scam_path = RADAR_DIR / f"estafas-{date.today().isoformat()}.tsv"
+            scam_path.write_text("portal|motivo|titulo|empresa|url\n", encoding="utf-8")
         selected = ["linkedin", "cosign", "startups", "yc", "speedrun", "getonbrd", "torre", "computrabajo", "becasit", "empleosit", "telegram", "bumeran", "uade"] if args.scrape == "all" else [args.scrape]
         for name in selected:
             print(f"## {name.capitalize()}")
@@ -741,6 +803,7 @@ def main():
                 jobs = []
             else:
                 jobs = []
+            jobs = _filter_scams(jobs, name, blocklist, scam_path)
             if args.write or args.new:
                 seen_today[name] = []
                 for j in jobs:

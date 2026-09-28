@@ -1,0 +1,11 @@
+# Lista negra de empresas y dominios que buscar_portales.py descarta siempre.
+# Una entrada por linea; se busca sin distinguir mayusculas dentro de la empresa y de la URL del aviso.
+# Agregar aca cada estafa confirmada, con la fecha y el motivo en un comentario.
+
+# 2026-09-28: postulantes reportan roles inexistentes y pedidos de instalar software de acceso remoto (Torre)
+Charles Perez LLC
+ProjectWorld
+# 2026-09-28: "paneles" de encuestas/focus groups disfrazados de empleo de entrada (Torre)
+FocusGroupPanel
+# 2026-09-28: programa que cobra una tarifa al candidato por una pasantia no remunerada
+theInterna
