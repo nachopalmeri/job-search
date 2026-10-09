@@ -5,10 +5,12 @@ import re
 import sys
 import unicodedata
 import urllib.request
+from urllib.error import HTTPError
+from urllib.parse import urlencode, urlsplit, urlunsplit
 import webbrowser
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from html import unescape
 from pathlib import Path
 
@@ -18,6 +20,7 @@ except ImportError:
     yaml = None
 
 FEEDS_YAML = Path(__file__).resolve().parent / "feeds_telegram.yaml"
+ATS_BOARDS_FILE = Path(__file__).resolve().parent / "ats_boards.json"
 
 KEYWORDS = ["pasantia", "pasantias", "pasante", "trainee", "jovenes+talentos", "jovenes+profesionales", "estudiante+sistemas", "junior", "part-time", "inteligencia+artificial", "python", "datos", "soporte", "help+desk", "AI+intern", "intern", "becario", "becarios", "practicante", "practicas+profesionales", "internship"]
 
@@ -30,27 +33,80 @@ BASE_LINKS = {
     "indeed": "https://ar.indeed.com/q-{kw}-empleos.html",
     "jobsora": "https://ar.jobsora.com/trabajo-{kw}-buenos-aires",
     "google": "https://www.google.com/search?ibp=htl;jobs&q={kw}+pasantia+IT+Argentina",
-    "uade": "https://www.empleos.uade.edu.ar/busquedaslaborales",
+    "uade": "https://www.empleos.uade.edu.ar/Postulaciones",
     "firstjob": "https://www.firstjob.com",
     "wellfound": "https://wellfound.com/role/l/intern/Argentina",
     "getonbrd": "https://www.getonbrd.com/empleos/programacion?per_page=20&search={kw}",
     "torre": "https://torre.ai/search/jobs?q={kw}",
     "cosign": "https://cosign.co/jobs",
-    "x_twitter": "https://x.com/search?q=(pasante%20OR%20pasantia%20OR%20trainee%20OR%20junior)%20(IT%20OR%20sistemas%20OR%20IA%20OR%20datos)%20(buscamos%20OR%20contratando%20OR%20hiring)%20lang%3Aes&f=live",
-    "startupsargentina": "https://www.startupsargentina.com/jobs",
-    "linkedin": "https://www.linkedin.com/jobs/search?keywords=pasantia&location=Argentina&f_TPR=r604800&f_E=1",
+    "startupsargentina": "https://www.startupsargentina.com/empleos",
+    "linkedin": "https://www.linkedin.com/jobs/search?keywords=pasantia&location=Argentina&f_TPR=r259200",
     "getonbrd_ar": "https://www.getonbrd.com.ar/trabajo/{kw}",
 }
 
-LINKEDIN_URL = "https://www.linkedin.com/jobs/search?keywords={kw}&location=Argentina&f_TPR=r604800&f_E=1"
-STARTUPS_URL = "https://www.startupsargentina.com/jobs"
+LINKEDIN_URL = "https://www.linkedin.com/jobs/search"
+MAX_AGE_DAYS = 3
+LINKEDIN_MAX_AGE_DAYS = MAX_AGE_DAYS
+LINKEDIN_QUERIES = [
+    "pasantía",
+    "pasante sistemas",
+    "pasantía tecnología",
+    "internship IT",
+    "trainee tecnología",
+    "soporte IT junior",
+    "analista de datos junior",
+    "QA intern",
+    "analista funcional junior",
+    "automatización junior",
+    "customer success intern",
+    "product operations intern",
+    "application support analyst Argentina",
+    "implementation analyst Buenos Aires",
+    "business systems analyst Argentina",
+    "reporting analyst entry level Argentina",
+    "financial operations analyst junior Argentina",
+    "AI operations analyst Argentina",
+    "AI adoption intern Argentina",
+    "IT operations associate Argentina",
+    "service desk analyst Argentina",
+    "network support trainee Argentina",
+    "cloud support associate Argentina",
+    "cybersecurity intern Argentina",
+    "ERP SAP trainee Argentina",
+    "PMO technology analyst junior Argentina",
+    "product analyst intern Argentina",
+    "risk analytics junior Argentina",
+    "automation specialist entry level Argentina",
+    "technical customer success associate Argentina",
+    "technology graduate program Argentina",
+]
+X_SEARCH_QUERIES = [
+    'pasantía IT Argentina',
+    'pasante sistemas Argentina',
+    'trainee tecnología Argentina',
+    'buscamos pasante soporte',
+    'pasantía datos Argentina',
+    '#EmpleoIT pasante',
+    '"buscamos" "desarrollador jr" Argentina',
+    '"buscamos" "analista junior" datos Argentina',
+    '"sumate" "automatización" junior Argentina',
+]
+LINKEDIN_POST_QUERIES = [
+    '"buscamos pasantes" (sistemas OR tecnología OR datos) Argentina',
+    '"desarrollador/a jr" (software OR IA) Argentina',
+    '"pasantía" (soporte OR infraestructura OR redes) Buenos Aires',
+    '"buscamos" ("analista junior" OR "business analyst junior") Argentina',
+    '"internship" (technology OR data OR product) "Buenos Aires"',
+]
+STARTUPS_URL = "https://www.startupsargentina.com/empleos"
 COMPUTRABAJO_URL = "https://ar.computrabajo.com/trabajo-de-{kw}"
 BECASIT_URL = "https://becasit.itechcareer.com/pasant%C3%ADas"
 EMPLEOSIT_RSS = "https://www.empleosit.com.ar/rss/"
 
 RADAR_DIR = Path(__file__).resolve().parent.parent / "radar"
 SEEN_FILE = RADAR_DIR / "seen_jobs.json"
-TSV_HEADER = "portal|fecha|titulo|empresa|ubicacion|modalidad|jornada|estado|url|nuevo|tracker"
+TSV_HEADER = "portal|fecha|titulo|empresa|ubicacion|modalidad|jornada|estado|url|nuevo|tracker|job_id|descripcion"
+UNVERIFIED_HEADER = TSV_HEADER + "|motivo"
 TRACKER_CSV = Path(__file__).resolve().parent.parent / "tracker" / "postulaciones.csv"
 
 UA = {
@@ -67,6 +123,15 @@ def build_links():
                 out.append(f"{portal} | {template.format(kw=kw)}")
         else:
             out.append(f"{portal} | {template}")
+    today = date.today()
+    since = (today - timedelta(days=MAX_AGE_DAYS)).isoformat()
+    until = (today + timedelta(days=1)).isoformat()
+    for query in X_SEARCH_QUERIES:
+        params = {"q": f"{query} since:{since} until:{until}", "f": "live"}
+        out.append(f"x_twitter | https://x.com/search?{urlencode(params)}")
+    for query in LINKEDIN_POST_QUERIES:
+        params = {"q": f"site:linkedin.com/posts/ {query} after:{since}", "tbs": "qdr:d3"}
+        out.append(f"linkedin_posts | https://www.google.com/search?{urlencode(params)}")
     return out
 
 
@@ -77,11 +142,18 @@ def _get(url):
 
 
 def _clean(text):
-    return re.sub(r"\s+", " ", unescape(text)).strip()
+    return re.sub(r"\s+", " ", unescape(str(text or ""))).strip()
 
 
 # --- Cruce contra el tracker de Nacho (tracker/postulaciones.csv): empresa + puesto, nunca solo la empresa ---
 _TRK_STOP = {"argentina", "group", "inc", "llc", "ltd", "srl", "sas", "company", "the", "and", "for", "remote", "latam", "labs", "tech"}
+_SPANISH_MONTHS = {
+    "ene": 1, "enero": 1, "feb": 2, "febrero": 2, "mar": 3, "marzo": 3,
+    "abr": 4, "abril": 4, "may": 5, "mayo": 5, "jun": 6, "junio": 6,
+    "jul": 7, "julio": 7, "ago": 8, "agosto": 8, "sep": 9, "sept": 9,
+    "septiembre": 9, "setiembre": 9, "oct": 10, "octubre": 10, "nov": 11,
+    "noviembre": 11, "dic": 12, "diciembre": 12,
+}
 
 
 def _norm(s):
@@ -99,28 +171,47 @@ def _same_company(a_tokens, b_tokens):
 
 
 def _load_tracker():
-    """Postulaciones ya registradas (enviadas o descartadas a proposito). 'Para postular' no cuenta: todavia no se mando."""
+    """Estado del aviso exacto en el tracker, incluyendo pendientes para no re-descubrirlos como nuevos."""
     out = []
     if not TRACKER_CSV.exists():
         return out
     with TRACKER_CSV.open(encoding="utf-8", newline="") as fh:
         for r in csv.DictReader(fh):
             est = (r.get("estado") or "").strip()
-            if est in ("", "Para postular"):
+            if not est:
                 continue
+            label = "PARA_POSTULAR" if est == "Para postular" else ("DESCARTADA" if est == "Descartada" else "REGISTRADA")
             out.append((_tokens(r.get("empresa")), _norm(r.get("puesto")),
                         (r.get("link") or "").split("?")[0].strip().lower(),
-                        "DESCARTADA" if est == "Descartada" else "POSTULADA"))
+                        label))
     return out
 
 
+_UADE_ID_RE = re.compile(r"\b20\d{2}-\d{3,5}\b")
+_GENERIC_PORTAL_URLS = {
+    "https://www.empleos.uade.edu.ar",
+    "https://www.empleos.uade.edu.ar/",
+    "https://www.empleos.uade.edu.ar/postulaciones",
+}
+
+
 def _tracker_mark(job, tracker):
-    """'POSTULADA' / 'DESCARTADA' si ese aviso exacto ya esta en el tracker; '' si es nuevo para Nacho.
-    Igual URL = seguro. Si no, misma empresa (token en comun) Y mismo puesto (igual, prefijo de 3+ palabras, o 80% de palabras en comun)."""
+    """'PARA_POSTULAR' / 'REGISTRADA' / 'DESCARTADA' si el aviso ya está en tracker; '' si es nuevo.
+    Un enlace genérico al portal UADE no identifica una oferta individual."""
     url = (job.get("url") or "").split("?")[0].strip().lower()
     emp, tit = _tokens(job.get("empresa")), _norm(job.get("titulo"))
+    job_id = str(job.get("job_id") or "")
+    if not _UADE_ID_RE.fullmatch(job_id):
+        match = _UADE_ID_RE.search(f"{job.get('titulo', '')} {job.get('url', '')}")
+        job_id = match.group() if match else ""
     for toks, puesto, link, label in tracker:
-        if url and link and url == link:
+        match = _UADE_ID_RE.search(f"{puesto} {link}")
+        tracker_id = match.group() if match else ""
+        if job_id and tracker_id:
+            if job_id == tracker_id:
+                return label
+            continue
+        if url and link and url == link and url not in _GENERIC_PORTAL_URLS:
             return label
         if not _same_company(emp, toks) or not tit or not puesto:
             continue
@@ -133,7 +224,43 @@ def _tracker_mark(job, tracker):
 
 
 def _seen_key(job):
-    return job.get("url", "").strip().split("?")[0] or f"{job.get('portal','')}|{job.get('titulo','')}".lower()
+    job_id = str(job.get("job_id") or "")
+    if job.get("portal") == "uade" and _UADE_ID_RE.fullmatch(job_id):
+        return f"uade:{job_id}"
+    company, title, location = (_norm(job.get(k, "")) for k in ("empresa", "titulo", "ubicacion"))
+    if company and title:
+        return f"fingerprint:{company}|{title}|{location}"
+    raw_url = (job.get("url") or "").strip()
+    if raw_url:
+        parts = urlsplit(raw_url)
+        return urlunsplit((parts.scheme.lower(), parts.netloc.lower(), parts.path.rstrip("/").lower(), "", ""))
+    return f"fallback:{job.get('portal','')}|{title}|{location}".lower()
+
+
+def _legacy_seen_url(job):
+    """URL-key migration for seen_jobs.json created before stable employer/title fingerprints."""
+    if job.get("portal") == "uade":
+        return ""
+    return (job.get("url") or "").strip().split("?")[0]
+
+
+def _job_fingerprint(job):
+    job_id = str(job.get("job_id") or "")
+    if job.get("portal") == "uade" and _UADE_ID_RE.fullmatch(job_id):
+        return f"uade:{job_id}"
+    company, title, location = (_norm(job.get(k, "")) for k in ("empresa", "titulo", "ubicacion"))
+    if location and _REMOTE_OK_RE.search(location) and not _FOREIGN_GEO_RE.search(location):
+        location = "argentina-or-remote"
+    return f"{company}|{title}|{location}" if company and title else ""
+
+
+def _safe_source(name, function, *args, **kwargs):
+    """Aísla fallos por portal para que una API caída no cancele el resto de la pasada."""
+    try:
+        return function(*args, **kwargs)
+    except Exception as exc:
+        print(f"WARN {name}: {type(exc).__name__}: {exc}; se continúa con las demás fuentes", file=sys.stderr)
+        return []
 
 
 def _load_seen():
@@ -162,76 +289,272 @@ def _emit(portal, jobs, tsv_path=None):
         tsv_path.parent.mkdir(parents=True, exist_ok=True)
         with tsv_path.open("a", encoding="utf-8") as fh:
             for j in jobs:
-                row = [j.get(k, "") for k in ["fecha", "titulo", "empresa", "ubicacion", "modalidad", "jornada", "estado", "url", "nuevo", "tracker"]]
-                row = [str(v).replace("|", "/") for v in row]
+                row = [j.get(k, "") for k in ["fecha", "titulo", "empresa", "ubicacion", "modalidad", "jornada", "estado", "url", "nuevo", "tracker", "job_id", "descripcion"]]
+                row = [re.sub(r"\s+", " ", str(v)).replace("|", "/")[:8000] for v in row]
                 fh.write(f"{portal}|" + "|".join(row) + "\n")
     for j in jobs:
-        print(f"{portal} | {j['titulo']} | {j['empresa']} | {j['ubicacion']} | {j['fecha']} | {j['modalidad']} | {j['jornada']} | {j['estado']} | {j['url']} | {j.get('nuevo','')} | {j.get('tracker','')}")
+        print(f"{portal} | {j['titulo']} | {j['empresa']} | {j['ubicacion']} | {j['fecha']} | {j['modalidad']} | {j['jornada']} | {j['estado']} | {j['url']} | {j.get('nuevo','')} | {j.get('tracker','')} | {j.get('job_id','')}")
+
+
+def _linkedin_search_url(keywords):
+    """Construye la consulta con Boolean, espacios y acentos escapados correctamente."""
+    params = {
+        "keywords": keywords,
+        "location": "Argentina",
+        "f_TPR": f"r{LINKEDIN_MAX_AGE_DAYS * 24 * 60 * 60}",
+    }
+    return f"{LINKEDIN_URL}?{urlencode(params)}"
 
 
 def scrape_linkedin(kw):
     jobs = []
-    html = _get(LINKEDIN_URL.format(kw=kw))
+    html = _get(_linkedin_search_url(kw))
+    stale_or_future = 0
+    unknown_date = 0
+    cutoff = date.today() - timedelta(days=LINKEDIN_MAX_AGE_DAYS)
     for block in re.split(r'data-entity-urn="urn:li:jobPosting:', html)[1:]:
         job_id = block.split('"', 1)[0]
-        href = _first(r'href="(https://ar\.linkedin\.com/jobs/view/[^"?]+)', block)
-        if href.endswith("?") or not href:
+        href = _first(r'href="([^"]*linkedin\.com/jobs/view/[^"?]+)', block)
+        if not job_id.isdigit() and not href:
+            continue
+        published = _first(r'job-search-card__listdate" datetime="([^" ]+)', block)
+        try:
+            published_day = date.fromisoformat(published[:10])
+        except (TypeError, ValueError):
+            unknown_date += 1
+            continue
+        if published_day < cutoff or published_day > date.today():
+            stale_or_future += 1
             continue
         title = _first(r'base-search-card__title">(.*?)</h3>', block)
         company = _first(r'hidden-nested-link[^>]*>\s*(.*?)\s*</a>', block)
         location = _first(r'job-search-card__location">(.*?)</span>', block)
-        fecha = _first(r'job-search-card__listdate" datetime="([^"]+)"', block)
         hiring = "Actively Hiring" if _first(r'job-posting-benefits__text">(.*?)</span>', block) else ""
         if not title and not company:
             continue
+        canonical_url = f"https://www.linkedin.com/jobs/view/{job_id}" if job_id.isdigit() else href.split("?", 1)[0].rstrip("/")
         jobs.append({
-            "fecha": fecha, "titulo": title, "empresa": company, "ubicacion": location,
-            "modalidad": "", "jornada": "", "estado": hiring, "url": href,
+            "fecha": published_day.isoformat(), "titulo": title, "empresa": company, "ubicacion": location,
+            "modalidad": "", "jornada": "", "estado": hiring, "url": canonical_url, "job_id": job_id,
         })
+    if stale_or_future or unknown_date:
+        print(f"  LinkedIn {kw[:48]}: excluidos {stale_or_future} fuera de fecha y {unknown_date} sin fecha verificable")
     return jobs
+
+
+def _posted_date(raw, today=None):
+    """Parsea fechas absolutas y relativas comunes; None significa que no se puede verificar."""
+    if not raw:
+        return None
+    today = today or date.today()
+    value = _clean(str(raw)).strip().lower()
+    if value in {"hoy", "today", "just posted", "recién publicado", "recien publicado"}:
+        return today
+    if value in {"ayer", "yesterday"}:
+        return today - timedelta(days=1)
+    relative = re.search(
+        r"(?:(?:hace|publicado(?:\s+hace)?|posted)\s+)?(\d+|un|una|one)\s*"
+        r"(min(?:ute|uto)?s?|horas?|hours?|hrs?|h|d[ií]as?|days?|d|semanas?|weeks?|w|"
+        r"mes(?:es)?|months?|mo|a[nñ]os?|years?|y)\b\s*(?:ago)?",
+        value,
+    )
+    if relative:
+        amount_raw, unit = relative.groups()
+        amount = {"un": 1, "una": 1, "one": 1}.get(amount_raw, int(amount_raw) if amount_raw.isdigit() else 1)
+        if unit.startswith(("min", "hor", "hour", "hr", "h")):
+            return today
+        if unit.startswith("sem") or unit.startswith("week"):
+            amount *= 7
+        elif unit.startswith(("mes", "month", "mo")):
+            amount *= 30
+        elif unit.startswith(("a", "year", "y")):
+            amount *= 365
+        return today - timedelta(days=amount)
+    iso = re.match(r"^(\d{4}-\d{2}-\d{2})(?:[Tt ](.*))?$", value)
+    if iso:
+        try:
+            return date.fromisoformat(iso.group(1))
+        except ValueError:
+            return None
+    for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%d.%m.%Y", "%b %d, %Y", "%B %d, %Y"):
+        try:
+            return datetime.strptime(value, fmt).date()
+        except ValueError:
+            continue
+    spanish = re.fullmatch(r"(\d{1,2})\s+(?:de\s+)?([a-záéíóú]+)\.?\s+(?:de\s+)?(\d{4})", value)
+    if spanish:
+        month = _SPANISH_MONTHS.get(spanish.group(2).replace("é", "e").replace("á", "a"))
+        if month:
+            try:
+                return date(int(spanish.group(3)), month, int(spanish.group(1)))
+            except ValueError:
+                pass
+    return None
+
+
+def _filter_fresh(jobs, portal, max_age_days=MAX_AGE_DAYS, today=None, unverified_path=None, secondary_path=None):
+    """Puerta final común: solo deja avisos con fecha verificable dentro de la ventana configurada."""
+    today = today or date.today()
+    fresh, secondary, unverified, stale, future = [], [], [], 0, 0
+    for job in jobs:
+        posted = _posted_date(job.get("fecha"), today)
+        if posted is None:
+            observed = job.get("fecha_portal")
+            reason = "fecha original no verificable" + (f"; fecha del portal {observed}" if observed else "")
+            if "GEO_NO_VERIFICADA" in str(job.get("estado", "")):
+                reason += "; elegibilidad geográfica no verificable"
+            unverified.append((job, reason))
+        elif posted > today:
+            future += 1
+            unverified.append((job, "fecha futura; requiere validar el aviso original"))
+        elif (today - posted).days > max_age_days:
+            age = (today - posted).days
+            if age <= 14:
+                secondary.append((job, f"publicado hace {age} días; ventana secundaria 4–14 días"))
+            else:
+                stale += 1
+        else:
+            if portal in {"linkedin", "computrabajo", "speedrun"}:
+                unverified.append((job, "fecha del portal dentro de 3 días; confirmar primera publicación en empleador/ATS"))
+            else:
+                fresh.append(job)
+    if unverified_path and unverified:
+        with unverified_path.open("a", encoding="utf-8") as fh:
+            for job, reason in unverified:
+                values = [portal] + [job.get(k, "") for k in ("fecha", "titulo", "empresa", "ubicacion", "modalidad", "jornada", "estado", "url", "nuevo", "tracker", "job_id", "descripcion")] + [reason]
+                fh.write("|".join(re.sub(r"\s+", " ", str(v)).replace("|", "/")[:8000] for v in values) + "\n")
+    if unverified or secondary or stale:
+        print(f"  -> Vigencia {portal}: {len(fresh)} vigentes; {stale} antiguos; {future} futuros y {len(unverified)-future} sin fecha verificable" + (f" (detalle: {unverified_path})" if unverified_path and unverified else ""))
+    return fresh, [job for job, _ in secondary]
 
 
 # --- Filtros de relevancia para fuentes grandes (Startups Argentina / YC / Speedrun) ---
 # Regla v3 (25/09/2026): full-time YA NO es veto. Se descarta solo por seniority claramente alto.
 _SENIOR_RE = re.compile(r"\b(senior|sr\.?|staff|principal|lead|leader|head|director|vp|manager|architect|cto|cfo|chief|ssr|semi[- ]?senior|expert|ii|iii|iv)\b", re.I)
+# Regla v4 (28/09/2026): lo que manda es "sin experiencia" (intern/trainee/junior) y que acepte Argentina.
+# Una palabra de entrada en el titulo gana sobre la de seniority ("Product Manager Intern", "Jr. Team Lead" pasan).
+_ENTRY_RE = re.compile(r"(intern|pasant|junior|\bjr\b|trainee|becari|practicante|entry|new grad|graduate|apprentic|"
+                       r"fellow|early career|emerging talent|j[oó]venes|estudiante|student|sin experiencia|primer empleo)", re.I)
 _ENTRY_TECH_RE = re.compile(
-    r"(intern|pasant|junior|\bjr\b|trainee|becari|practicante|entry|new grad|graduate|apprentic|"
+    _ENTRY_RE.pattern[:-1] + r"|"
     r"support|soporte|help ?desk|\bqa\b|tester|test |data|datos|python|automat|\bai\b|\bia\b|\bml\b|prompt|"
     r"sistemas|developer|desarrollador|engineer|software|implementation|onboarding|"
-    r"customer success|technical|it operations|devops)", re.I)
+    r"customer success|technical|it operations|devops|"
+    r"analyst|analista|operations|operaciones|\bops\b|growth|research|business|associate|asistente|assistant|"
+    r"no.?code|low.?code|zapier|n8n|llm|gpt|agent|agente|crm|\bbi\b|product)", re.I)
+
+
+def _is_senior(title):
+    t = title or ""
+    return bool(_SENIOR_RE.search(t)) and not _ENTRY_RE.search(t)
 
 
 def _relevant(title):
     t = title or ""
-    return bool(_ENTRY_TECH_RE.search(t)) and not _SENIOR_RE.search(t)
+    # Recall-first discovery: seniority is an eligibility decision after the
+    # full description is read. A title may say "Manager/Engineer" yet be a
+    # campus or associate programme; do not drop it here.
+    return bool(_ENTRY_TECH_RE.search(t))
 
 
-# Para agregadores masivos (Cosign, Torre, Get on Board) "intern"/"junior" solo no alcanza: tiene que ser tech/ops tecnico.
+# Para agregadores masivos (Cosign, Torre, Get on Board) "intern"/"junior" solo no alcanza: tiene que ser tech/ops tecnico,
+# pero se acepta tambien ops/analista/growth/research: es el tipo de rol de entrada que Nacho puede tomar.
 _TECH_RE = re.compile(
     r"(support|soporte|help ?desk|\bqa\b|tester|testing|data|datos|python|automat|\bai\b|\bia\b|\bml\b|machine learning|prompt|"
     r"sistemas|developer|desarrollador|engineer|ingenier|software|programad|implementation|implementaci|onboarding|"
     r"customer success|technical|t[eé]cnic|\bit\b|tecnolog|devops|cloud|backend|frontend|full.?stack|analytics|analista|"
-    r"product|security|seguridad|infra|network|redes|sql|web)", re.I)
+    r"product|security|seguridad|infra|network|redes|sql|web|"
+    r"analyst|operations|operaciones|\bops\b|growth|research|business|no.?code|low.?code|zapier|n8n|llm|gpt|agent|agente|"
+    r"crm|\bbi\b|excel|process|proceso|solutions|customer|cx\b|digital)", re.I)
 
 
 def _tech_entry(title, entry_hint=False):
     t = title or ""
-    if _SENIOR_RE.search(t) or not _TECH_RE.search(t):
+    if not _TECH_RE.search(t):
         return False
-    return entry_hint or _relevant(t)
+    return bool(entry_hint or _relevant(t) or _TECH_RE.search(t))
 
 
-_REMOTE_OK_RE = re.compile(r"(?i:argentina|latin america|latam|south america|americas|worldwide|global|anywhere)|\bAR\b")
-_US_ONLY_RE = re.compile(r"\((?:us|usa|canada|ca|uk|eu|india|in)[^)]*\)|\bus only\b|united states|, us\b|/ us\b", re.I)
+_REMOTE_OK_RE = re.compile(
+    r"(?i:argentina|argentinian|latin america|latam|south america|americas|worldwide|global|anywhere|"
+    r"buenos aires|caba|ciudad autonoma|cordoba|rosario|mendoza|santa fe|la plata|mar del plata|amba)|\bar\b", re.I
+)
+_US_ONLY_RE = re.compile(
+    r"\b(?:us|usa|united states|canada|uk|united kingdom|eu|europe|india)\s*(?:only|exclusive)\b|"
+    r"\b(?:only|must be based in|based in|authorized to work in|eligible to work in)\s+(?:the\s+)?"
+    r"(?:us|usa|united states|canada|uk|united kingdom|india)\b|"
+    r"\b(?:remote|remoto)\s+(?:in\s+)?(?:us|usa|united states|canada|uk|india)\b|"
+    r"\b(?:remote|remoto)\s*[-:–—(\[]\s*(?:us|usa|united states|canada|uk|india)\b",
+    re.I,
+)
 
 
 def _remote_ok(loc):
     """Remoto alcanzable desde Argentina: acepta LatAm/Argentina/Worldwide o 'Remote' a secas (ambiguo, se revisa a mano).
     Rechaza 'Remote (US)', 'Toronto ... / Remote', 'Remote (FR)' y cualquier remoto atado a otra region/pais."""
     l = (loc or "").strip()
+    if _US_ONLY_RE.search(l):
+        return False
     if _REMOTE_OK_RE.search(l):
         return True
     return bool(re.fullmatch(r"remote|remoto|remote \(worldwide\)|anywhere", l, re.I))
+
+
+# --- Filtro anti-estafas (28/09/2026) ---
+# Se aplica a TODAS las fuentes antes de escribir el TSV. Lo descartado va a radar/estafas-<fecha>.tsv
+# para poder revisarlo, nunca al reporte. Lista negra editable en scripts/estafas.txt.
+ESTAFAS_FILE = Path(__file__).resolve().parent / "estafas.txt"
+_SCAM_TITLE_RE = re.compile(
+    r"(paid survey|encuestas? pagas?|focus group|panel(ista)?s? de|mystery shopper|cliente oculto|"
+    r"earn (up to|\$)|gan[aá] (hasta|desde) \$|ingresos? extra|dinero r[aá]pido|work from home.*\$|"
+    r"sin experiencia.*\$\s?\d{3,}.*(d[ií]a|hora)|data entry.*(remote|remoto).*\$|"
+    r"(crypto|cripto|forex) (trad|invers|invest)|trading (assistant|trainee)|trader trainee|"
+    r"reshipp|package (handler|forward)|reenv[ií]o de paquetes|payment (processing )?agent|agente de pagos|"
+    r"money transfer|transferencias? de dinero|"
+    r"pag[aá] (la|tu) capacitaci|training fee|registration fee|inscripci[oó]n paga|"
+    r"multinivel|mlm|network marketing|"
+    r"(contact|escrib|envi[aá]).{0,25}(whats ?app|telegram))", re.I)
+_SCAM_URL_RE = re.compile(r"(bit\.ly|tinyurl|t\.me/|wa\.me/|chat\.whatsapp|forms\.gle|linktr\.ee|\.(xyz|top|click|icu)(/|$))", re.I)
+
+
+def _load_scam_list():
+    try:
+        lines = ESTAFAS_FILE.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    return [l.strip().lower() for l in lines if l.strip() and not l.lstrip().startswith("#")]
+
+
+def _scam_reason(j, blocklist):
+    """Motivo si el aviso es una estafa probable; '' si pasa. Solo senales fuertes: ante la duda pasa y se lee a mano."""
+    empresa = (j.get("empresa") or "").strip()
+    url = j.get("url") or ""
+    hay = f"{empresa} {url}".lower()
+    for b in blocklist:
+        if b in hay:
+            return f"lista negra: {b}"
+    if _SCAM_TITLE_RE.search(j.get("titulo") or ""):
+        return "titulo con patron de estafa"
+    if _SCAM_URL_RE.search(url):
+        return "link acortado, de mensajeria o dominio de riesgo"
+    # Torre y Get on Board permiten avisos sin empresa: sin empresa identificable no se puede verificar nada.
+    if j.get("estado") in ("Torre", "GetOnBoard") and not empresa:
+        return "sin empresa identificable"
+    return ""
+
+
+def _filter_scams(jobs, portal, blocklist, out_path=None):
+    ok, bad = [], []
+    for j in jobs:
+        why = _scam_reason(j, blocklist)
+        (bad if why else ok).append((j, why))
+    if bad:
+        print(f"  -> {portal}: {len(bad)} descartados por posible estafa")
+        if out_path:
+            with out_path.open("a", encoding="utf-8") as f:
+                for j, why in bad:
+                    f.write("|".join([portal, why, j.get("titulo", ""), j.get("empresa", ""), j.get("url", "")]) + "\n")
+    return [j for j, _ in ok]
 
 
 def _get_json(url):
@@ -239,6 +562,129 @@ def _get_json(url):
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=30) as r:
         return json.loads(r.read().decode("utf-8", errors="replace"))
+
+
+def _load_ats_boards(ats):
+    """Carga sólo tableros ATS públicos previamente verificados, sin descubrir tokens por scraping."""
+    try:
+        data = json.loads(ATS_BOARDS_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        print(f"WARN ATS: no se pudo leer {ATS_BOARDS_FILE.name}: {exc}", file=sys.stderr)
+        return []
+    return [row for row in data if row.get("ats", "").lower() == ats]
+
+
+_ARGENTINA_GEO_RE = re.compile(
+    r"\b(argentina|argentinian|latam|latin america|south america|americas|"
+    r"buenos aires|caba|ciudad autonoma|cordoba|rosario|mendoza|santa fe|la plata|mar del plata|amba)\b", re.I
+)
+_ATS_DESC_GEO_RE = re.compile(
+    r"\b(argentina|argentinian|latam|latin america|south america|americas|buenos aires|caba|"
+    r"ciudad autonoma|cordoba|rosario|mendoza|santa fe|la plata|mar del plata|amba|"
+    r"remote worldwide|worldwide remote|work from anywhere|anywhere in the world|globally remote)\b", re.I
+)
+_FOREIGN_GEO_RE = re.compile(
+    r"\b(us|usa|u\.s\.|united states|canada|mexico|brazil|chile|colombia|peru|uruguay|"
+    r"united kingdom|uk|europe|india|australia|new zealand|singapore|philippines|poland)\b", re.I
+)
+
+
+def _ats_candidate(title, location, description):
+    """Reduce ruido ATS: rol relacionado al perfil y ubicación compatible/ambigua para revisión manual."""
+    # Search title plus description so "Operations Associate" can survive
+    # when its actual responsibilities involve SQL, automation, or systems.
+    search_text = f"{title}\n{_clean(description[:3000])}"
+    if not _TECH_RE.search(search_text):
+        return False
+    if _US_ONLY_RE.search(f"{location} {description[:2200]}"):
+        return False
+    if _remote_ok(location):
+        return True
+    if _FOREIGN_GEO_RE.search(location) and not _ARGENTINA_GEO_RE.search(location):
+        return False
+    # Algunas bolsas publican una ciudad genérica y detallan elegibilidad en el aviso.
+    # No usar la descripción corporativa completa: sólo su encabezado geográfico.
+    geo_context = _clean(description[:1800])
+    return bool(_ATS_DESC_GEO_RE.search(geo_context))
+
+
+def scrape_ats(ats):
+    """Lee tableros Greenhouse/Lever/Ashby; nunca envía formularios."""
+    boards = _load_ats_boards(ats)
+    jobs, failures, fetched = [], 0, 0
+    for board in boards:
+        token = board.get("token", "").strip()
+        company = board.get("company", "").strip()
+        if not token or not company:
+            print(f"WARN {ats}: tablero incompleto omitido ({board.get('id', 'sin id')})", file=sys.stderr)
+            failures += 1
+            continue
+        if ats == "greenhouse":
+            url = f"https://boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true"
+        elif ats == "lever":
+            url = f"https://api.lever.co/v0/postings/{token}?mode=json"
+        else:
+            url = f"https://api.ashbyhq.com/posting-api/job-board/{token}"
+        try:
+            payload = _get_json(url)
+            if ats == "greenhouse" and (not isinstance(payload, dict) or not isinstance(payload.get("jobs"), list)):
+                raise ValueError("respuesta Greenhouse sin la lista jobs esperada")
+            rows = payload.get("jobs", []) if isinstance(payload, dict) and ats in {"greenhouse", "ashby"} else payload
+            if ats == "ashby" and not isinstance(payload, dict):
+                raise ValueError("respuesta Ashby sin objeto JSON")
+            if not isinstance(rows, list):
+                raise ValueError("respuesta JSON sin lista de avisos")
+            fetched += len(rows)
+        except Exception as exc:
+            failures += 1
+            print(f"WARN {ats} board={board.get('id', token)}: {type(exc).__name__}: {exc}", file=sys.stderr)
+            continue
+        for row in rows:
+            if ats == "greenhouse":
+                title = _clean(row.get("title", ""))
+                location = _clean((row.get("location") or {}).get("name", ""))
+                description = _clean(re.sub(r"<[^>]+>", " ", row.get("content", "") or ""))[:8000]
+                posted = row.get("first_published", "") or ""
+                link = row.get("absolute_url", "")
+                workplace = "Remoto" if re.search(r"remote|remoto|anywhere", location, re.I) else ""
+                commitment = ""
+                employer = _clean(row.get("company_name", "")) or company
+            elif ats == "lever":
+                title = _clean(row.get("text", "") or row.get("title", ""))
+                categories = row.get("categories") or {}
+                location = _clean(
+                    categories.get("location", "")
+                    or ", ".join(categories.get("allLocations", []) or [])
+                )
+                description = row.get("descriptionPlain", "") or row.get("descriptionBodyPlain", "") or ""
+                created = row.get("createdAt")
+                try:
+                    posted = datetime.fromtimestamp(float(created) / 1000, tz=timezone.utc).date().isoformat() if created else ""
+                except (TypeError, ValueError, OSError, OverflowError):
+                    posted = ""
+                link = row.get("hostedUrl", "")
+                workplace = _clean(row.get("workplaceType", ""))
+                commitment = _clean(categories.get("commitment", ""))
+                employer = company
+            else:
+                title = _clean(row.get("title", ""))
+                location = _clean(row.get("location", ""))
+                description = _clean(row.get("descriptionPlain", ""))[:8000]
+                posted = _clean(row.get("publishedAt", ""))[:10]
+                link = row.get("applyUrl") or row.get("jobUrl") or ""
+                workplace = _clean(row.get("workplaceType", ""))
+                commitment = _clean(row.get("employmentType", ""))
+                employer = company
+            if not title or not link or not _ats_candidate(title, location, description):
+                continue
+            jobs.append({
+                "fecha": posted, "titulo": title, "empresa": employer, "ubicacion": location,
+                "modalidad": workplace, "jornada": commitment, "estado": "", "url": link,
+                "job_id": str(row.get("id", "")),
+                "descripcion": description,
+            })
+    print(f"  -> {ats.title()}: {len(boards)-failures}/{len(boards)} tableros respondieron; {fetched} avisos leídos; {len(jobs)} candidatos por rol/ubicación")
+    return jobs
 
 
 def scrape_startupsargentina(max_pages=40, only_relevant=True):
@@ -263,6 +709,7 @@ def scrape_startupsargentina(max_pages=40, only_relevant=True):
             seen_ids.add(jid)
             found += 1
             title, company, loc = _clean(title), _clean(company), _clean(loc)
+            # Startups Argentina ya es 100% Argentina: filtro amplio (v4), saca senior y lo que no es tech/ops/datos/analista.
             if only_relevant and not _relevant(title):
                 continue
             jobs.append({
@@ -306,8 +753,6 @@ def scrape_yc(only_relevant=True):
                 continue
             if only_relevant and not (is_intern or _relevant(title)):
                 continue
-            if _SENIOR_RE.search(title):
-                continue
             jobs.append({
                 "fecha": "", "titulo": title, "empresa": f"{company} ({batch})" if batch else company,
                 "ubicacion": loc, "modalidad": jtype, "jornada": salary, "estado": "YC",
@@ -318,9 +763,10 @@ def scrape_yc(only_relevant=True):
 
 
 def scrape_speedrun(pages=3):
-    """a16z Speedrun Talent Network via su API JSON (/api/jobs). Remoto + entry/intern/junior + keywords de nuestro perfil."""
+    """a16z Speedrun Talent Network. Discovery is broad; score eligibility later."""
     jobs, seen_ids = [], set()
-    queries = ["intern", "junior", "entry level", "python", "support", "qa", "automation", "data analyst"]
+    queries = ["intern", "junior", "entry level", "student", "python", "support", "qa", "automation",
+               "data analyst", "business analyst", "operations", "product operations", "IT", "systems", "AI"]
     for q in queries:
         for page in range(pages):
             try:
@@ -342,14 +788,15 @@ def scrape_speedrun(pages=3):
                     continue
                 if not _remote_ok(loc):
                     continue
-                if j.get("seniority") in ("senior", "staff", "exec", "director", "vp") or _SENIOR_RE.search(title):
-                    continue
+                # Seniority is scored after description enrichment, not used
+                # as an early discovery veto (title labels can be noisy).
                 jobs.append({
                     "fecha": (j.get("published_at") or "")[:10], "titulo": title, "empresa": j.get("company_key", ""),
                     "ubicacion": loc, "modalidad": j.get("employment_type") or "", "jornada": j.get("seniority") or "",
                     "estado": "Speedrun", "url": "https://speedrun-talent-network.com" + j.get("path", ""),
+                    "descripcion": _clean(j.get("description") or j.get("description_text") or "")[:8000],
                 })
-    print(f"  -> a16z Speedrun: {len(jobs)} remotos entry/intern")
+    print(f"  -> a16z Speedrun: {len(jobs)} roles remotos relacionados (eligibilidad pendiente de descripción)")
     return jobs
 
 
@@ -370,7 +817,8 @@ def scrape_cosign(pages=3):
     intern/junior remoto, y filtramos entry/tech + ubicacion alcanzable desde AR."""
     endpoint = "https://cheerful-donkey-418.convex.cloud/api/action"
     searches = [("Argentina", False), ("Buenos Aires", False), ("LATAM", True),
-                ("intern", True), ("junior", True), ("trainee", False), ("pasantia", False)]
+                ("intern", True), ("junior", True), ("trainee", False), ("pasantia", False),
+                ("entry level", True), ("new grad", True), ("fellowship", False), ("analyst", True)]
     jobs, seen_ids = [], set()
     for term, remote_only in searches:
         cursor = None
@@ -402,6 +850,7 @@ def scrape_cosign(pages=3):
                     "fecha": "", "titulo": title, "empresa": a.get("organizationName") if a.get("organizationName") not in (None, "index") else (a.get("organizationPath") or "").split("/")[-1],
                     "ubicacion": loc, "modalidad": "Remoto" if a.get("remote") else "", "jornada": a.get("employmentType") or "",
                     "estado": "Cosign", "url": a.get("applyUrl") or a.get("url") or "https://cosign.co/jobs",
+                    "descripcion": _clean(a.get("description") or a.get("descriptionText") or "")[:8000],
                 })
             cursor = val.get("continueCursor")
             if val.get("isDone") or not cursor:
@@ -414,7 +863,8 @@ def scrape_cosign(pages=3):
 
 def scrape_getonbrd(pages=2):
     """Get on Board via API publica v0 (/api/v0/search/jobs). Seniority 1=sin experiencia, 2=junior."""
-    queries = ["practicante", "pasantia", "trainee", "junior", "intern", "soporte", "qa", "python", "datos"]
+    queries = ["practicante", "pasantia", "trainee", "junior", "intern", "soporte", "qa", "python", "datos",
+               "analista", "operaciones", "automatizacion", "inteligencia artificial", "no code"]
     jobs, seen_urls = [], set()
     for q in queries:
         for page in range(1, pages + 1):
@@ -437,20 +887,31 @@ def scrape_getonbrd(pages=2):
                 zone = (a.get("remote_zone") or "") if remote else ""
                 if not _tech_entry(title, sen in (1, 2)):
                     continue
-                if not ("Argentina" in countries or (remote and (not zone or _AR_LOC_RE.search(str(zone)) or "latam" in str(zone).lower() or "world" in str(zone).lower()))):
+                argentina = any(str(country).lower() == "argentina" for country in countries)
+                region_ok = bool(remote and zone and (_AR_LOC_RE.search(str(zone)) or "latam" in str(zone).lower() or "world" in str(zone).lower()))
+                if not (argentina or region_ok or remote):
                     continue
                 ts = a.get("published_at")
-                fecha = date.fromtimestamp(ts).isoformat() if isinstance(ts, (int, float)) else ""
+                fecha = ""
+                try:
+                    timestamp = float(ts)
+                    if timestamp > 100_000_000_000:  # algunos feeds entregan milisegundos
+                        timestamp /= 1000
+                    fecha = datetime.fromtimestamp(timestamp, tz=timezone.utc).date().isoformat()
+                except (TypeError, ValueError, OSError, OverflowError):
+                    pass  # El filtro común separa lo que no tenga fecha verificable.
                 jobs.append({
-                    "fecha": fecha, "titulo": title,
+                    # published_at puede ser republicación; no prueba la fecha original.
+                    "fecha": "", "fecha_portal": fecha, "titulo": title,
                     "empresa": (((a.get("company") or {}).get("data") or {}).get("attributes") or {}).get("name", ""),
                     "ubicacion": ", ".join(countries) or ("Remoto" if remote else ""),
                     "modalidad": a.get("remote_modality") or "", "jornada": {1: "sin experiencia", 2: "junior"}.get(sen, ""),
-                    "estado": "GetOnBoard", "url": url,
+                    "estado": "FECHA_ORIGINAL_NO_VERIFICADA" + ("; GEO_NO_VERIFICADA" if not (argentina or region_ok) else ""), "url": url,
+                    "descripcion": _clean(a.get("description") or a.get("description_html") or "")[:8000],
                 })
             if page >= (data.get("meta") or {}).get("total_pages", 1):
                 break
-    print(f"  -> GetOnBoard: {len(jobs)} (Argentina o remoto alcanzable, sin experiencia/junior)")
+    print(f"  -> GetOnBoard: {len(jobs)} candidatos; fecha original y zona remota requieren revisión antes de priorizar")
     return jobs
 
 
@@ -458,7 +919,21 @@ def scrape_torre(pages=3):
     """Torre (torre.ai): API de busqueda publica por POST (search.torre.co). Maximo size=20 por pedido
     (con mas devuelve 400), se pagina con offset. Solo abiertas, AR o remoto anywhere/LatAm.
     Las 9 busquedas van en paralelo: en serie tardaban ~70 s y hacian que el shell de un agente pasara el comando a segundo plano."""
-    queries = ["pasante", "pasantia", "intern", "trainee", "junior", "python", "soporte", "qa", "analista de datos"]
+    endpoint = "https://search.torre.co/opportunities/_search/?size=20&offset=0&lang=es"
+    probe = {"and": [{"keywords": {"term": "junior", "locale": "es"}}]}
+    try:
+        _post_json(endpoint, probe)
+    except HTTPError as exc:
+        if exc.code == 400:
+            print("WARN Torre: la API pública rechaza las consultas (HTTP 400 Invalid request); se detienen los reintentos y queda solo la búsqueda manual", file=sys.stderr)
+            return []
+        print(f"WARN Torre: prueba de disponibilidad falló (HTTP {exc.code}); queda parcial", file=sys.stderr)
+        return []
+    except Exception as exc:
+        print(f"WARN Torre: prueba de disponibilidad falló ({type(exc).__name__}); queda parcial", file=sys.stderr)
+        return []
+    queries = ["pasante", "pasantia", "intern", "trainee", "junior", "python", "soporte", "qa", "analista de datos",
+               "operaciones", "automatizacion", "inteligencia artificial", "entry level"]
     jobs, seen_ids = [], set()
 
     def one_query(q):
@@ -628,8 +1103,9 @@ def main():
     ap = argparse.ArgumentParser(description="Busqueda diaria de pasantias IT Argentina")
     ap.add_argument("--links", action="store_true", help="imprimir links de busqueda prearmados")
     ap.add_argument("--open", action="store_true", help="abrir links en el navegador")
-    ap.add_argument("--scrape", choices=["linkedin", "cosign", "startups", "yc", "speedrun", "getonbrd", "torre", "computrabajo", "becasit", "empleosit", "telegram", "bumeran", "uade", "wellfound", "all"], help="scrapeo de avisos")
-    ap.add_argument("--kw", default="pasantia", help="keyword para el scrapeo (LinkedIn / Computrabajo)")
+    ap.add_argument("--scrape", choices=["linkedin", "cosign", "startups", "yc", "speedrun", "getonbrd", "torre", "computrabajo", "becasit", "empleosit", "greenhouse", "lever", "ashby", "telegram", "bumeran", "uade", "wellfound", "all"], help="scrapeo de avisos")
+    ap.add_argument("--kw", default="pasantia", help="keyword para Computrabajo; LinkedIn usa familias curadas de consultas")
+    ap.add_argument("--uade-text", type=Path, help="texto copiado de Búsquedas sin carrera específica en la sesión UADE")
     ap.add_argument("--write", action="store_true", help="guardar en radar/daily-YYYY-MM-DD.tsv y actualizar seen_jobs.json")
     ap.add_argument("--new", action="store_true", help="mostrar solo avisos no vistos antes (comparado contra seen_jobs.json)")
     args = ap.parse_args()
@@ -653,37 +1129,80 @@ def main():
             tsv_path.write_text(TSV_HEADER + "\n", encoding="utf-8")
         # "all" = fuentes que funcionan sin login. Wellfound (SPA) queda fuera; UADE y X se revisan en el navegador.
         tracker = _load_tracker()
-        selected = ["linkedin", "cosign", "startups", "yc", "speedrun", "getonbrd", "torre", "computrabajo", "becasit", "empleosit", "telegram", "bumeran", "uade"] if args.scrape == "all" else [args.scrape]
+        blocklist = _load_scam_list()
+        scam_path = None
+        if args.write:
+            scam_path = RADAR_DIR / f"estafas-{date.today().isoformat()}.tsv"
+            scam_path.write_text("portal|motivo|titulo|empresa|url\n", encoding="utf-8")
+            unverified_path = RADAR_DIR / f"unverified-{date.today().isoformat()}.tsv"
+            unverified_path.write_text(UNVERIFIED_HEADER + "\n", encoding="utf-8")
+            secondary_path = RADAR_DIR / f"secondary-{date.today().isoformat()}.tsv"
+            secondary_path.write_text(UNVERIFIED_HEADER + "\n", encoding="utf-8")
+        else:
+            unverified_path = None
+            secondary_path = None
+        # `all` means sources that work unattended. Login/captcha and disabled feeds remain explicit/manual.
+        # ATS/empleadores oficiales primero: si un agregador replica el aviso, se conserva la URL primaria.
+        selected = ["greenhouse", "lever", "ashby", "startups", "yc", "speedrun", "cosign", "getonbrd", "torre", "computrabajo", "becasit", "empleosit", "linkedin"] if args.scrape == "all" else [args.scrape]
+        if args.scrape == "all" and args.uade_text:
+            selected.append("uade")
+        fingerprints_today = set()
+        secondary_fingerprints = set()
         for name in selected:
             print(f"## {name.capitalize()}")
             if name == "linkedin":
-                # Expand LinkedIn: 10 keywords (pasantia + AI intern + becario + etc.) — deduplicado por URL
-                linkedin_kws = ["pasantia", "pasante", "AI+intern", "intern", "becario", "practicante", "trainee", "junior", "part-time", "inteligencia+artificial", "jovenes+profesionales", "jovenes+talentos"]
-                seen_urls = set()
+                # Consultas breves y amplias; deduplica por ID estable.
+                linkedin_kws = LINKEDIN_QUERIES
+                seen_linkedin_jobs = set()
                 jobs = []
+                rate_limited = False
+                attempted_queries = 0
+                zero_yield_streak = 0
                 for kw in linkedin_kws:
+                    attempted_queries += 1
+                    query_new = 0
                     try:
                         for j in scrape_linkedin(kw):
-                            if j["url"] not in seen_urls:
-                                seen_urls.add(j["url"])
+                            key = j.get("job_id") or j["url"].split("?", 1)[0].rstrip("/").lower()
+                            if key not in seen_linkedin_jobs:
+                                seen_linkedin_jobs.add(key)
                                 jobs.append(j)
+                                query_new += 1
+                    except HTTPError as e:
+                        if e.code == 429:
+                            print(f"WARN LinkedIn limitó la búsqueda (HTTP 429); se detienen las consultas restantes ({len(linkedin_kws)} familias configuradas).", file=sys.stderr)
+                            rate_limited = True
+                            break
+                        print(f"WARN linkedin kw={kw}: HTTP {e.code}", file=sys.stderr)
                     except Exception as e:
                         print(f"WARN linkedin kw={kw}: {e}", file=sys.stderr)
-                print(f"  -> LinkedIn expandido: {len(jobs)} únicos de {len(linkedin_kws)} keywords")
+                    # Bounded query expansion: stop only after broad coverage
+                    # is established and eight consecutive variants add no IDs.
+                    if attempted_queries >= 12 and query_new == 0:
+                        zero_yield_streak += 1
+                    else:
+                        zero_yield_streak = 0
+                    if zero_yield_streak >= 8:
+                        print(f"LinkedIn: se detienen variantes sin nuevos IDs tras {attempted_queries} consultas")
+                        break
+                suffix = " (circuito abierto por 429)" if rate_limited else ""
+                print(f"  -> LinkedIn expandido: {len(jobs)} únicos; {attempted_queries}/{len(linkedin_kws)} consultas intentadas{suffix}")
+            elif name in ("greenhouse", "lever", "ashby"):
+                jobs = scrape_ats(name)
             elif name == "startups":
-                jobs = scrape_startupsargentina()
+                jobs = _safe_source(name, scrape_startupsargentina)
             elif name == "yc":
-                jobs = scrape_yc()
+                jobs = _safe_source(name, scrape_yc)
             elif name == "speedrun":
-                jobs = scrape_speedrun()
+                jobs = _safe_source(name, scrape_speedrun)
             elif name == "computrabajo":
-                jobs = scrape_computrabajo(args.kw)
+                jobs = _safe_source(name, scrape_computrabajo, args.kw)
             elif name == "becasit":
-                jobs = scrape_becasit()
+                jobs = _safe_source(name, scrape_becasit)
             elif name == "empleosit":
-                jobs = scrape_empleosit()
+                jobs = _safe_source(name, scrape_empleosit)
             elif name == "telegram":
-                jobs = scrape_telegram_feeds()
+                jobs = _safe_source(name, scrape_telegram_feeds)
             elif name == "bumeran":
                 # Intenta stealth via bumeran_scraper.py (soporta ambos import paths)
                 try:
@@ -695,6 +1214,17 @@ def main():
                     print(f"  -> Bumeran stealth: {len(jobs)}")
                 except Exception as e:
                     print(f"WARN bumeran stealth no disponible: {e}", file=sys.stderr)
+                    jobs = []
+            elif name == "uade" and args.uade_text:
+                try:
+                    try:
+                        from scripts.uade_import import parse_list
+                    except ImportError:
+                        from uade_import import parse_list  # type: ignore
+                    jobs = parse_list(args.uade_text.read_text(encoding="utf-8-sig"))
+                    print(f"  -> UADE, texto de sesión: {len(jobs)} avisos con ID")
+                except (OSError, UnicodeError) as e:
+                    print(f"WARN UADE texto no legible: {e}", file=sys.stderr)
                     jobs = []
             elif name == "uade":
                 # UADE via uade_scraper.py (requiere .secrets/uade_cookies.json, si no existe → 0 y WARN)
@@ -712,22 +1242,54 @@ def main():
                     print(f"WARN uade scraper: {e}", file=sys.stderr)
                     jobs = []
             elif name == "cosign":
-                jobs = scrape_cosign()
+                jobs = _safe_source(name, scrape_cosign)
             elif name == "getonbrd":
-                jobs = scrape_getonbrd()
+                jobs = _safe_source(name, scrape_getonbrd)
             elif name == "torre":
-                jobs = scrape_torre()
+                jobs = _safe_source(name, scrape_torre)
             elif name == "wellfound":
                 # Wellfound es una SPA con login: no hay listado scrapeable. Queda como link manual (--links).
                 print("  -> Wellfound: 0 (SPA con login; revisar a mano con --links)")
                 jobs = []
             else:
                 jobs = []
+            jobs, secondary_jobs = _filter_fresh(jobs, name, unverified_path=unverified_path, secondary_path=secondary_path)
+            jobs = _filter_scams(jobs, name, blocklist, scam_path)
+            secondary_jobs = _filter_scams(secondary_jobs, name, blocklist, scam_path)
+            secondary_unique = []
+            for candidate in secondary_jobs:
+                fingerprint = _job_fingerprint(candidate)
+                if fingerprint and fingerprint in secondary_fingerprints:
+                    continue
+                if fingerprint:
+                    secondary_fingerprints.add(fingerprint)
+                candidate["tracker"] = _tracker_mark(candidate, tracker)
+                secondary_unique.append(candidate)
+            if args.write and secondary_path:
+                with secondary_path.open("a", encoding="utf-8") as fh:
+                    for candidate in secondary_unique:
+                        posted = _posted_date(candidate.get("fecha"))
+                        age = (date.today() - posted).days if posted else ""
+                        reason = f"publicado hace {age} días; ventana secundaria 4–14 días" if age != "" else ""
+                        values = [name] + [candidate.get(k, "") for k in ("fecha", "titulo", "empresa", "ubicacion", "modalidad", "jornada", "estado", "url", "nuevo", "tracker", "job_id")] + [reason]
+                        fh.write("|".join(str(v).replace("|", "/") for v in values) + "\n")
+            unique_jobs = []
+            for job in jobs:
+                fingerprint = _job_fingerprint(job)
+                if fingerprint and fingerprint in fingerprints_today:
+                    continue
+                if fingerprint:
+                    fingerprints_today.add(fingerprint)
+                unique_jobs.append(job)
+            if len(unique_jobs) != len(jobs):
+                print(f"  -> {name}: {len(jobs)-len(unique_jobs)} duplicados entre fuentes omitidos")
+            jobs = unique_jobs
             if args.write or args.new:
                 seen_today[name] = []
                 for j in jobs:
                     key = _seen_key(j)
-                    if key not in seen:
+                    legacy_key = _legacy_seen_url(j)
+                    if key not in seen and (not legacy_key or legacy_key not in seen):
                         j["nuevo"] = "NUEVO"
                         seen[key] = date.today().isoformat()
                         seen_today[name].append(j)

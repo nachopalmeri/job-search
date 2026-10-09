@@ -24,7 +24,7 @@ BASE = Path(__file__).resolve().parent.parent
 SECRETS_DIR = BASE / ".secrets"
 STORAGE = SECRETS_DIR / "uade_cookies.json"
 UADE_LOGIN = "https://www.empleos.uade.edu.ar/"
-UADE_LIST = "https://www.empleos.uade.edu.ar/busquedaslaborales"
+UADE_LIST = "https://www.empleos.uade.edu.ar/Postulaciones"
 
 # Import lazy para no romper --help si playwright no instalado
 def _ensure_playwright():
@@ -114,7 +114,8 @@ def scrape_uade(headless=True, max_pages=2):
                 # Regex fallback si SPA no renderizó cards
                 for m in re.finditer(r'busqueda\s*(\d{4}-\d+)', html, re.I):
                     bid = m.group(1)
-                    jobs.append({"fecha": str(date.today()), "titulo": f"Busqueda {bid}", "empresa": "", "ubicacion": "UADE", "modalidad": "", "jornada": "", "estado": "UADE", "url": f"{UADE_LIST}/{bid}"})
+                    # Sin fecha original, no se puede declarar este aviso reciente.
+                    jobs.append({"portal": "uade", "job_id": bid, "fecha": "", "titulo": f"Busqueda {bid}", "empresa": "", "ubicacion": "UADE", "modalidad": "", "jornada": "", "estado": "FECHA_NO_VERIFICADA", "url": UADE_LIST})
                 break
             for c in cards:
                 try:
@@ -124,15 +125,15 @@ def scrape_uade(headless=True, max_pages=2):
                     titulo = lines[0] if lines else "Busqueda UADE"
                     empresa = lines[1] if len(lines) > 1 else ""
                     # Link
+                    m = re.search(r'(20\d{2}-\d{3,5})', txt)
                     a = c.query_selector("a[href*='busqueda']")
                     href = a.get_attribute("href") if a else ""
                     if href and href.startswith("/"):
                         href = "https://www.empleos.uade.edu.ar" + href
                     elif not href:
-                        # buscar id en texto
-                        m = re.search(r'(\d{4}-\d+)', txt)
-                        href = f"{UADE_LIST}/{m.group(1)}" if m else UADE_LIST
-                    jobs.append({"fecha": str(date.today()), "titulo": titulo[:90], "empresa": empresa[:40], "ubicacion": "UADE", "modalidad": "", "jornada": "", "estado": "UADE", "url": href})
+                        href = UADE_LIST
+                    # La vista no garantiza la fecha de publicación: queda sin verificar.
+                    jobs.append({"portal": "uade", "job_id": m.group(1) if m else "", "fecha": "", "titulo": titulo[:90], "empresa": empresa[:40], "ubicacion": "UADE", "modalidad": "", "jornada": "", "estado": "FECHA_NO_VERIFICADA", "url": href})
                 except Exception:
                     continue
             # Paginación
