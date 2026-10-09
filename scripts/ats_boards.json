@@ -1,0 +1,82 @@
+[
+  {
+    "id": "sezzle",
+    "ats": "greenhouse",
+    "token": "sezzle",
+    "company": "Sezzle",
+    "verified_at": "2026-10-07",
+    "board_url": "https://job-boards.greenhouse.io/sezzle"
+  },
+  {
+    "id": "ryzlabs",
+    "ats": "lever",
+    "token": "RyzLabs",
+    "company": "RYZ Labs",
+    "verified_at": "2026-10-07",
+    "board_url": "https://jobs.lever.co/RyzLabs"
+  },
+  {
+    "id": "emilabs",
+    "ats": "lever",
+    "token": "emilabs",
+    "company": "Emi Labs",
+    "verified_at": "2026-10-07",
+    "board_url": "https://jobs.lever.co/emilabs"
+  },
+  {
+    "id": "sauce",
+    "ats": "lever",
+    "token": "Sauce",
+    "company": "Sauce",
+    "verified_at": "2026-10-07",
+    "board_url": "https://jobs.lever.co/Sauce"
+  },
+  {
+    "id": "aleph",
+    "ats": "lever",
+    "token": "aleph",
+    "company": "Aleph",
+    "verified_at": "2026-10-07",
+    "board_url": "https://jobs.lever.co/aleph"
+  },
+  {
+    "id": "flex",
+    "ats": "lever",
+    "token": "Flex",
+    "company": "Flex",
+    "verified_at": "2026-10-07",
+    "board_url": "https://jobs.lever.co/Flex"
+  },
+  {
+    "id": "mural",
+    "ats": "ashby",
+    "token": "mural",
+    "company": "Mural",
+    "verified_at": "2026-10-09",
+    "board_url": "https://jobs.ashbyhq.com/mural"
+  },
+  {
+    "id": "capchase",
+    "ats": "ashby",
+    "token": "capchase",
+    "company": "Capchase",
+    "verified_at": "2026-10-09",
+    "board_url": "https://jobs.ashbyhq.com/capchase"
+  },
+  {
+    "id": "messa",
+    "ats": "ashby",
+    "token": "messa",
+    "company": "Messa",
+    "verified_at": "2026-10-09",
+    "board_url": "https://jobs.ashbyhq.com/messa"
+  },
+  {
+    "id": "latamcent",
+    "ats": "ashby",
+    "token": "latamcent",
+    "company": "LatamCent",
+    "verified_at": "2026-10-09",
+    "board_url": "https://jobs.ashbyhq.com/latamcent"
+  }
+]

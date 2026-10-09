@@ -1,141 +1,61 @@
-# Portales argentinos — investigación 2026 (para la búsqueda diaria)
+# Fuentes de búsqueda laboral — estado operativo
 
-Resultado de la investigación (ago 2026) + conocimiento del mercado. Ordenados por prioridad para el perfil: pasantía IT / estudiante sistemas / part-time.
+Este archivo mantiene el inventario de fuentes. El flujo y las reglas están en [`AGENTS.md`](AGENTS.md); consultas y parsing, en [`scripts/buscar_portales.py`](scripts/buscar_portales.py). No mantener la misma lista detallada en varios prompts.
 
-> **Fuente v2 (pestañas abiertas del usuario, 5/8/2026):** 23 pestañas clasificadas en 8 categorías al final de este archivo. Se incorporó: Portal UADE (login), FirstJob, Wellfound, Y Combinator, GoodVibeCode, Vibehackers, Appgentina, Credly, y el tracker propio en Google Sheets.
+## Reglas de frescura
 
-## Tier 1 — revisar TODOS los días (máxima señal)
+- Tope: **3 días de antigüedad** desde la publicación original en cada pasada.
+- Orden de evidencia: ATS/página del empleador → anuncio original del portal → post del reclutador. El índice de búsqueda, “republicado” y la fecha de scrapeo no acreditan frescura.
+- La ausencia de fecha no es fecha reciente. Marcar “no verificada” y excluir de matches activos.
+- Verificar que siga abierta y que acepte candidaturas desde Argentina antes de puntuar.
 
-| Portal | URL búsqueda | Notas / cómo usarlo |
-|---|---|---|
-| **BecasIT** | https://becasit.itechcareer.com/pasantías | El que ya usamos: 14+ pasantías IT activas (Analista IA, Python, DBA, Infra). Tiene avisos por mail directo (empleo@itechCareer.com) — estrategia: enviar email con pretensión salarial (placeholder $[MONT0]). Revisar "Pasantías IT" a diario. |
-| **LinkedIn** | linkedin.com/jobs | Principal canal B2B. Configurar alertas: "pasantía", "trainee", "programa jóvenes talentos", "estudiante sistemas", "IT", "IA". Activar OpenToWork (reclutadores ven el perfil). Para scraping: endpoints guest (uso personal bajo, respetar ToS) |
-| **Computrabajo** | ar.computrabajo.com/trabajo-de-tecnologia | Sección tecnología con junior/pasante. Avisos frescos "Urgente" (ej. Mesa de Ayuda JR 11-20hs, Help Desk 9-15hs, Desarrollador JAVA Junior). Los avisos con horario part-time son oro para nosotros. |
+## Fuentes automáticas (`--scrape all`)
 
-## Tier 2 — 2-3 veces por semana
-
-| Portal | URL | Notas |
-|---|---|---|
-| **Bumeran** | bumeran.com.ar | Estándar argentino, integrado con reclutadoras (IBM usa Bumeran). Exige sueldo pretendido en algunos avisos → usar rango mercado ($250–500K, ajustar). Bloquea scrape (auth/Cloudflare) → links manuales. |
-| **Empleos IT** | empleosit.com.ar | Bolsa especializada IT argentina desde 2011. Tiene avisos de pasantía y jr. |
-| **Get on Board** | getonbrd.com.ar | Tech/startups, incluye remoto. Buenos perfiles IA/data. API pública JSON para autofetch. |
-| **Jooble** | ar.jooble.org | Metabuscador — agarra avisos de todo (1657 vacantes "pasantía programador BA"). Bueno para descubrir programas (ExxonMobil Internship, YPF Pasantías, INKOMPASS Philip Morris, JEI, SeedZ, Central Puerto). Usar como radar, aplicar en el portal original. |
-| **Indeed** | ar.indeed.com | Metabuscador con filtro por "pasantía". Mucho ruido, útil como radar. |
-
-## Tier 3 — semanal o por campaña
-
-| Portal | URL | Notas |
-|---|---|---|
-| **ZonaJobs** | zonajobs.com.ar | Avisos exclusivos de CABA en algunos casos. |
-| **Empleos AMIA (SEA)** | empleos.amia.org.ar | Base de postulantes + empresas, tradicional de Argentina. |
-| **Portal Empleo (Gob. AR)** | argentina.gob.ar/trabajo/empleo | Ofertas verificadas, programas nacionales. |
-| **Jobsora** | ar.jobsora.com | Metabuscador con filtro "pasantías estudiantes BA". |
-| **Google Empleos** | google.com/search?q=...&ibp=htl;jobs | Agrega todo lo anterior. Útil como búsqueda programática diaria con keywords. |
-| **Universia / bolsas universitarias** | universia.net | Ofertas para estudiantes; la UADE tiene su propia bolsa (revisar campus UADE). |
-
-## Fuentes agregadas en v3 (25/09/2026) — scrapeables en `--scrape all`
-
-| Fuente | Cómo se scrapea | Notas |
-|---|---|---|
-| **Startups Argentina** `/empleos?page=N` | HTML SSR, ~400 avisos en 18 páginas (el viejo `/jobs` con `job-card` ya no existe; el parser anterior devolvía 0 en silencio) | Filtro de relevancia por título (`_relevant`) para no volcar 400 filas. Full-time ya no es veto |
-| **YC Work at a Startup** `ycombinator.com/jobs/role/<rol>/remote` | HTML SSR, ~34 avisos por rol (roles: software-engineer, operations, support-success, science, product-manager) | Solo remoto alcanzable desde AR (LatAm/AR/"Remote" a secas). Cobertura parcial: el sitio pagina en JS |
-| **a16z Speedrun Talent Network** `speedrun-talent-network.com/api/jobs` | API JSON (`remote=1&q=<kw>&page=N`); ojo: Cloudflare bloquea el UA completo, usar `User-Agent: Mozilla/5.0` | ~6.600 roles; "Remote" suele ser US-only: verificar a mano antes de postular |
-| **Cosign** `cosign.co/jobs` (a16z) | Next.js + backend Convex: `POST https://cheerful-donkey-418.convex.cloud/api/action` con `{"path":"jobSearchAction:search","args":{"term","remoteOnly","cursor","limit":30}}`. Paginación por `continueCursor` | Agregador de miles de avisos (Accenture, Red Hat, Salesforce, Webflow, Chainlink, Kraken...). Se busca Argentina / Buenos Aires / LATAM / intern / junior / trainee / pasantía y se filtra tech + entry + ubicación AR/LatAm. Prueba 26/09/2026: 348 revisados → 43 relevantes. Si devuelve 0 con WARN, revisar si cambió el deployment o el nombre de la acción en el JS de /jobs |
-| **Get on Board** `getonbrd.com/api/v0/search/jobs` | API JSON pública (`query`, `per_page=50`, `page`, `expand=["company"]`) | Reemplaza el parser HTML viejo (0 resultados). Seniority 1 = sin experiencia, 2 = junior. Filtra Argentina o remoto sin zona / LatAm |
-| **Torre** `search.torre.co/opportunities/_search/` | API por POST, **máximo `size=20`** (con más da 400), paginar con `offset`. No acepta filtro de estado: se descartan las no `open` en el script | Muchas pasantías remotas "anywhere" de empresas chicas; el filtro exige título técnico |
-
-## Fuentes con el navegador de Nacho (sin script, requieren sesión)
-
-| Fuente | Cómo | Notas |
-|---|---|---|
-| **Portal UADE** | Claude in Chrome, sesión de Nacho. Filtrar por carrera (Gestión de TI, sin carrera específica, Informática, Ciencia de Datos, Desarrollo de Software) | Solo leer. El scraper `uade_scraper.py` necesita cookies en `.secrets/` y no está configurado |
-| **X (Twitter)** | Claude in Chrome, búsqueda "Más reciente" con keywords de pasantía/junior + IT (link prearmado `x_twitter` en `--links`) | Solo leer; reportar tuits con aviso concreto de la última semana |
-
-## Fuentes apagadas
-
-| Fuente | Motivo (26/09/2026) |
-|---|---|
-| **Telegram** (SysArmy, empleosIT_ar, BusquedasIT y 12 canales más probados) | Ningún canal IT AR con avisos recientes en su preview público; BusquedasIT sin posts desde 2023-05. Apagados en `feeds_telegram.yaml` |
-| **Wellfound** | SPA con login, no hay listado scrapeable. Queda como link manual |
-
-## Radar de programas (campañas anuales — revisar mensual)
-
-ExxonMobil Internship, YPF Pasantías, INKOMPASS (Philip Morris), Programa JEI, SeedZ (trainees), Central Puerto (pasante de datos — ¡Python + pandas! buen fit), Amazon Internships, IBM (Req 127046), Wetcom Jóvenes Talentos, BecasIT.
-
-## Portal UADE (crítico — exclusivo de estudiantes)
-
-| Portal | URL | Notas |
-|---|---|---|
-| **Portal de Empleos UADE** | https://www.empleos.uade.edu.ar/ (login con libreta universitaria) | Exclusivo alumnos y graduados. **3.600+ instituciones, 1.800 convenios de pasantía/año**, filtros por Pasantía / Efectivo / Joven Profesional, y por carrera. Obligatorio: cargar CV en PDF, **actualizar datos cada 2 meses** (si no, se inactiva el registro y no sos candidato). Es el canal #1 para pasantías reales con Ley 26.427. |
-| UADE — Búsquedas laborales | uade.edu.ar/acerca-de-uade/desarrollo-profesional.../busquedas-laborales/ | Página índice de ofertas; el paso de aplicar se hace en el portal con login. |
-
-**Acción inmediata:** cargar CV y activar el perfil hoy en `empleos.uade.edu.ar/busquedaslaborales`. Es una fuente que no tiene competencia de toda la web — solo alumnos UADE.
-
-## Incorporación de pestañas del usuario (23, 5/8/2026)
-
-Clasificación por categoría. Se añaden a la rutina diaria según su tier.
-
-### A. Bolsas universitarias / pasantías formales
-| Portal | URL | Rol en la rutina |
-|---|---|---|
-| **Portal de Empleos UADE** | *empleos.uade.edu.ar* | Tier 1 (login) — hay una periodicidad de 2 meses de actualización de CV. |
-| **EMPLEOS UADE — Búsquedas disponibles** | empleos.uade.edu.ar/busquedaslaborales | Mismo portal, página de listado. Tier 1. |
-| **FirstJob** | firstjob.com / (verificar dominio vigente) | Especializada en "Práctica, Pasantía, Internship y primeros trabajos" — target directo de nuestro perfil. Investigar cobertura AR; si aplica, Tier 1. |
-| **BecasIT** (ya listado) | becasit.itechcareer.com/pasantías | Tier 1 (existente). |
-
-### B. Portales generales / tech
-- **Indeed Argentina** (8) — Tier 2 (ya listado).
-- **Bumeran** ("Bolsa de trabajo Argentina · Portal de empleo Líder en Argentina", 11) — Tier 2.
-- **LinkedIn Feed** (8) — Tier 1; el Feed importa para oportunidades "ocultas" (puestos compartidos por reclutadores).
-- **Empleos IT** (18) — Tier 2 (ya listado).
-- **Get on Board** (14) — Tier 2 (desde 26/09/2026 se scrapea por su API pública v0).
-
-### C. Startups / tech / remoto
-| Portal | Notas |
-|---|---|
-| **Wellfound** (9) | wellfound.com — bolsa de startups (ex AngelList), perfiles de empresas de product. Buen candidato a Tier 2 para roles tech en startups early (remoto LATAM). |
-| **Y Combinator — Work at a Startup** (7 + Events) | ycombinator.com/work-at-a-startup + events.ycombinator.com: program startups, hiring portal de YC. Útil para ver el ecosistema y algunos roles remotos LatAm. Tier 3. |
-| **Vibe Coding Jobs — GoodVibeCode** (12) | goodvibecode.io o similar: roles de AI developer / vibe coding. Nicho naciente; útil como radar novedoso. Tier 3. |
-| **Vibehackers** (13) | vibehackers.com: proyectos de vibe coding hechos en público — no es portal de empleo sino comunidad/proyectos. Útil para detectar gente y oportunidades en ciernes. Tier 3. |
-
-### D. **AI / data entry / microtask** (ingresos flexibles, NO pasantía)
-- **Alignerr powered by Labelbox** (1) — alineación de datos para AI/RLHF, pago por tareas. Compatible con 20hs.
-- **Prolific** (2) — academia, estudios pagos, encuestas y experimentos. Compatible, ingreso modesto.
-- **Outlier** (3) — outlier.ai, entrenamiento de IA (labels/corecciones). Flexibilidad total remoto.
-- **DataAnnotation** (4) — similar a Outlier, proyectos de anotación. No siempre alocan 10hs; revisar disponibilidad.
-
-> Nota honesta: estos cuatro NO son pasantía IT ni aportan a la carrera como Wetcom/BecasIT/UADE; son income lado flexible. Útiles para cubrir el hueco del monto $[MONT0] mientras sale lo grande, pero no hay que ponerlos como "experiencia IT" en CV. 
-
-### E. Beneficios / credenciales
-- **Credly — Editar perfil** (20) — credly.com: badges verificables (probablemente CCNA/NetAcad). Importante: **vincular Credly al perfil de LinkedIn** para que las insignias se vean y validar el CCNA en curso. Tier 3.
-
-### F. Thanks de crecimiento
-- **Appgentina** (23) — appgentina.com: eventos de tecnología en Argentina. Útil para networking presencial (meeting con JTs y reclutadores). Tier 3.
-- **Robertino Barbuto · Dev freelance** (22) — probablemente referencias de freelancers para redes; revisar si es contacto real para networking.
-
-### G. Tracker propio del usuario
-- **Tracker de postulaciones — Ignacio Palmeri (Google Sheets)** (21) — existe UN tracker en Hojas de cálculo del usuario. El CSV (`tracker/applications.csv`) es el canonical del skill; hay que mantenerse sincronizado con el Sheets del usuario (o usar el Sheets como fuente de verdad y el CSV como backup). **Confirmar con el usuario cuál es el sistema maestro.**
-
-> **DECISIÓN (5/8/2026):** el usuario confirmó que el **maestro es su Google Sheets** ("el maestro es mi spreadsheet que ya vengo usando"). El `tracker/applications.csv` local queda como **backup/estado del skill**, y cualquier nueva postulación se registra primero en el Sheets del usuario y después (opcional) en el CSV.
-
-### H. Incorporación v3 (5/8/2026) — Startups Argentina, Silver.dev, InfoJobs
-| Portal | URL | Verificación | Clasificación |
+| Fuente | Método | Límite conocido | Acción |
 |---|---|---|---|
-| **Startups Argentina** | startupsargentina.com/jobs | ✅ DNS ok; directorio de startups argentinas + feed de posiciones abiertas con fecha, etapa y link de aplicar. El feed `/jobs` y las fichas `/startups/{slug}` renderizan SSR (scrapeable). | Tier 2 (scrapeable + radar startups locales) |
-| **Silver.dev** | silver.dev/argentina | ✅ Talent agency LatAm→US startups (Scale AI, Ramp, Nubank). Requiere **Senior+, inglés fuerte, full-time, timezone US** | ❌ NO apto hoy (perfil senior). Radar largo plazo (3-4 años) |
-| **InfoJobs** | infojobs.net (España) | ⚠️ **No hay versión argentina** (`infojobs.com.ar` y `ar.infojobs.net` no resuelven); la .net es España | Descartado para búsqueda local; solo si hubiera avisos remotos globales |
+| LinkedIn Jobs | Página pública/guest; familias de consulta acotadas | Puede responder 429; no hay que insistir ni confiar solo en el filtro temporal | Cortar al primer 429 y contrastar candidatos con fecha original |
+| Startups Argentina | Listado SSR | Algunas fichas/listados no informan fecha | Solo promover si la ficha original confirma publicación ≤3 días |
+| YC Work at a Startup | Listados por familia/rol | Fecha y elegibilidad geográfica pueden faltar | Confirmar ubicación y ficha de empleo |
+| a16z Speedrun | API pública | “Remote” puede limitarse a EE. UU.; revisar país y fecha | Filtrar por ubicación y publicación original |
+| Cosign | Búsqueda pública del agregador | Fecha suele faltar; agregador mezcla empresas y mercados | No asumir frescura/Argentina por el título |
+| Get on Board | API pública de búsqueda | Verificar país remoto y fecha del aviso | Abrir ficha antes de puntuar |
+| Torre | API de oportunidades | Resultado abierto y lugar elegible deben confirmarse | Solo avisos vigentes con empresa identificable |
+| Computrabajo | Listado público por término | Fechas relativas/localizadas | Normalizar fecha; abrir el aviso original |
+| BecasIT | Listado público | La fecha puede no estar publicada | Confirmar vigencia y fecha; de lo contrario no promover |
+| EmpleosIT | RSS público | Algunos ítems no incluyen fecha estructurada | No asignar la fecha del RSS como fecha de publicación |
+| Greenhouse | API oficial por board token (`scripts/ats_boards.json`) | Es un feed por empresa; `updated_at` no equivale a primera publicación | Usar `first_published`, filtrar rol/ubicación y pasar por el filtro común de 3 días |
+| Lever | API oficial por board token (`scripts/ats_boards.json`) | Es un feed por empresa; algunas fechas o ubicaciones pueden faltar | Usar `createdAt`, filtrar rol/ubicación y pasar por el filtro común de 3 días |
 
-**Conclusiones de la pasada v3:** Bumeran, Indeed, Computrabajo, InfoJobs y similares ya estaban cubiertos en Tier 1/2. Lo nuevo útil: **Startups Argentina** (radar de startups locales) y la confirmación de que Silver.dev no corresponde al perfil. InfoJobs descartado (no opera en AR).
+El filtro de frescura común corre antes de `seen_jobs` y antes de escribir el TSV; lo desconocido no se registra como oportunidad fresca.
 
-## Notas técnicas de scraping (para el script)
+## Fuentes manuales / autenticadas
 
-- **Scrapeable directo (sin auth)** — 5 fuentes en el scraper unificado:
-  - **LinkedIn guest** `f_TPR=r604800&f_E=1` → las ~15-40 pasantías de la semana (primera página; paginación pide login → alcanza con 1).
-  - **Startups Argentina** `/jobs` y `/startups/{slug}` (SSR, sin JS).
-  - **Computrabajo** `ar.computrabajo.com/trabajo-de-{kw}` (SSR con `article.box_offer` + `js-o-link`).
-  - **BecasIT** `becasit.itechcareer.com/pasantías` (Google Sites SSR; título en el `<hN>` del collapse de cada bloque `oKdM2c ZZyype`).
-  - **EmpleosIT** `https://www.empleosit.com.ar/rss/` (feed RSS real con título, link, ubicación, modalidad y jornada).
-- **No scrapeable / manual**: Bumeran, ZonaJobs, Jooble (Cloudflare), Indeed (bloquea bots), Wellfound (SPA), FirstJob, Get on Board, UADE (login), paginación de LinkedIn (pide login), EmpleosIT app (solo funciona el RSS público).
-- Estrategia: `python scripts/buscar_portales.py --scrape all --write` consolida las 5 fuentes a `radar/daily-YYYY-MM-DD.tsv`; el **agente libre** (prompt `scripts/prompts/agente-libre.md`) cubre Google Empleos, bolsas manuales y radar de campañas en la web abierta → `radar/discoveries-YYYY-MM-DD.md`.
-- Keywords términos: `pasantía`, `pasante`, `trainee`, `programa jóvenes talentos`, `estudiante sistemas`, `junior`, `part-time`, `IT`, `IA`, `python`, `datos`, `soporte`, `help desk`, `analista`.
-- Zona: Buenos Aires / AMBA / híbrido / remoto Argentina.
+| Fuente | Qué revisar | Límite |
+|---|---|---|
+| Portal de Empleos UADE | Carrera del usuario **y “sin carrera específica”**; número, fecha, requisitos, jornada y ubicación | Sesión de Nacho; solo lectura |
+| LinkedIn Jobs | Consultas separadas por soporte, sistemas, datos, trainee/intern y operaciones/tecnología | Si navegador/API limita, marcar cobertura parcial |
+| X | Consultas simples y cortas en “Latest”; solo anuncio concreto con enlace oficial | Mucho ruido; tweets conversacionales no cuentan |
+| Bumeran, ZonaJobs, Indeed, Jooble | Buscar en web/navegador cuando el scraper bloquee o falle | Metabuscadores y contenido repetido; validar en el empleador |
+| Wellfound, FirstJob | Revisión en navegador cuando estén disponibles | Login/SPA; no automatizar autenticación |
+| Páginas de carrera | ATS y carreras oficiales de empleadores relevantes | No recorrer catálogos ilimitados; priorizar fecha, Argentina y etapa inicial |
+
+Si una fuente falla, probar una sola vez desde el navegador disponible. Registrar `sin resultados`, `parcial/error` o `no verificada`; no presentar un fallo como búsqueda completa.
+
+## ATS oficiales habilitados
+
+Los ATS exponen APIs oficiales útiles para una lista curada de empleadores, sin instalar un scraper de terceros:
+
+- **Greenhouse Job Board API:** `GET /v1/boards/{board_token}/jobs?content=true` publica trabajos y descripciones sin auth. [Docs](https://docs.greenhouse.io/job-board.html)
+- **Lever Postings API:** devuelve avisos publicados por empresa; no ofrece búsqueda global de texto. [Docs oficiales en GitHub](https://github.com/lever/postings-api)
+- **Ashby:** su API `jobPosting.list` requiere permiso `jobsRead`; para exponer avisos hay que limitarse a los publicados/listados. [Docs](https://developers.ashbyhq.com/reference/jobpostinglist)
+
+`--scrape all` consulta el tablero Greenhouse de Sezzle y los tableros Lever de RYZ Labs, Emi Labs, Sauce, Aleph y Flex, definidos en `scripts/ats_boards.json`. Se verificó que cada identificador responde a su API pública. El adaptador mantiene sólo avisos de áreas relacionadas y ubicaciones Argentina/LatAm/remotas; las fechas faltantes quedan fuera de matches frescos. Agregá un empleador al JSON solo después de verificar su board público y elegibilidad geográfica.
+
+Greenhouse expone `first_published` en su API; Lever expone `createdAt`. No usar `updated_at` para rejuvenecer una publicación. [Documentación Greenhouse](https://docs.greenhouse.io/job-board.html) · [Documentación Lever](https://github.com/lever/postings-api). Ashby queda diferido: su endpoint documentado requiere `jobsRead`, y no se encontró un endpoint público sin credenciales adecuado. No se scrapean endpoints privados ni se automatizan postulaciones.
+
+## Fuentes apagadas o fuera de la pasada diaria
+
+- Telegram: sin canales activos de calidad; no se consulta hasta verificar uno nuevo.
+- Bumeran: manual/condicional a que la sesión o navegador funcione; no anunciar cero resultados por fallo.
+- Wellfound: SPA con login; manual.
+- Workana, Tecnoempleo y microtareas de anotación: no forman parte del objetivo de pasantía/junior IT en Argentina; incluir solo si Nacho amplía el alcance.

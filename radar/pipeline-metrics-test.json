@@ -1,0 +1,29 @@
+{
+  "run_date": "2026-10-08",
+  "inputs": [
+    "D:\\Dev\\jsrepo\\radar\\daily-2026-10-08.tsv",
+    "D:\\Dev\\jsrepo\\radar\\unverified-2026-10-08.tsv"
+  ],
+  "input_rows_by_source": {
+    "lever": 3,
+    "uade": 15,
+    "startups": 154,
+    "yc": 5,
+    "speedrun": 1,
+    "cosign": 19,
+    "becasit": 13,
+    "getonbrd": 20,
+    "computrabajo": 12,
+    "linkedin": 153
+  },
+  "unique_opportunities": 389,
+  "original_date_verified": 18,
+  "within_3_days_verified": 18,
+  "within_14_days_verified": 0,
+  "date_unverified": 371,
+  "pending_enrichment": 389,
+  "limitations": [
+    "No original posting page was fetched by this pipeline.",
+    "No opportunity is marked eligible or ready to apply until enrichment is reviewed."
+  ]
+}

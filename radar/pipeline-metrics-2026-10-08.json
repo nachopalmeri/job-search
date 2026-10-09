@@ -1,0 +1,31 @@
+{
+  "run_date": "2026-10-08",
+  "inputs": [
+    "radar\\daily-2026-10-08.tsv",
+    "radar\\secondary-2026-10-08.tsv",
+    "radar\\unverified-2026-10-08.tsv"
+  ],
+  "input_rows_by_source": {
+    "lever": 15,
+    "speedrun": 24,
+    "uade": 15,
+    "greenhouse": 7,
+    "computrabajo": 19,
+    "startups": 312,
+    "yc": 5,
+    "cosign": 54,
+    "getonbrd": 202,
+    "becasit": 13,
+    "linkedin": 167
+  },
+  "unique_opportunities": 797,
+  "original_date_verified": 37,
+  "within_3_days_verified": 23,
+  "within_14_days_verified": 14,
+  "date_unverified": 760,
+  "pending_enrichment": 797,
+  "limitations": [
+    "No original posting page was fetched by this pipeline.",
+    "No opportunity is marked eligible or ready to apply until enrichment is reviewed."
+  ]
+}
