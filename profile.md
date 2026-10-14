@@ -34,8 +34,8 @@ Fuente de verdad para toda postulación. El resto del stack (CVs, LinkedIn, scri
 - **APIs e integración**: Telegram Bot API (JobBot), Stripe/MercadoPago (billing solo sandbox), datos ext.
 - **Git/GitHub**: 81+ commits reales en JobBot; repos: JobBot, FranquiYA (prototipo 57 commits), Agents System (73 commits), Prode Mundial 2026, PISKU (open-source lib, **no** en PyPI).
 - **Cloud basic**: despliegue en Vercel (portfolio + prode).
-- **Linux / CLI**: manejo de línea de comandos, terminal.
-- **Redes**: CCNA 1 en curso; subnetting, IP, switches básicos.
+- **Sistemas y Linux**: certificación optativa Red Hat RH124 verificada en Credly; administración introductoria de sistemas y manejo de CLI/terminal.
+- **Redes**: Cisco CCNA: Introduction to Networks, certificación optativa verificada en Credly; fundamentos de subnetting, IP y switches. No declarar CCNA Routing and Switching ni experiencia profesional de redes.
 - **SQL**: básico (proyectos con persistencia).
 
 ## "Claims" prohibidos (no existen)

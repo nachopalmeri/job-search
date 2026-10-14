@@ -8,10 +8,23 @@ BLOCKS = [
 ]
 
 def parse_jornada(jornada: str):
-    m = re.search(r"(\d{1,2})-(\d{1,2})", jornada)
+    m = re.search(
+        r"(?<!\d)(\d{1,2})(?::(\d{2}))?\s*(?:-|–|—|\ba\b|\bhasta\b)\s*"
+        r"(\d{1,2})(?::(\d{2}))?(?!\d)",
+        jornada,
+        re.IGNORECASE,
+    )
     if not m:
         return None
-    return time(int(m.group(1)),0), time(int(m.group(2)),0)
+    start_hour, start_minute, end_hour, end_minute = (
+        int(m.group(1)), int(m.group(2) or 0), int(m.group(3)), int(m.group(4) or 0)
+    )
+    if start_hour > 23 or end_hour > 23 or start_minute > 59 or end_minute > 59:
+        return None
+    start, end = time(start_hour, start_minute), time(end_hour, end_minute)
+    if end <= start:
+        return None
+    return start, end
 
 def score_compat(jornada: str, weekday: int = None) -> int:
     parsed = parse_jornada(jornada)
