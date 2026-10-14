@@ -1,6 +1,6 @@
 # Fuentes de búsqueda laboral — estado operativo
 
-Este archivo mantiene el inventario de fuentes. El flujo y las reglas están en [`AGENTS.md`](AGENTS.md); consultas y parsing, en [`scripts/buscar_portales.py`](scripts/buscar_portales.py). No mantener la misma lista detallada en varios prompts.
+El catálogo completo y auditable de fuentes está en [`scripts/search_sources.json`](scripts/search_sources.json). Este archivo explica límites y evidencia; el flujo está en [`AGENTS.md`](AGENTS.md), el scraping en [`scripts/buscar_portales.py`](scripts/buscar_portales.py) y el estado diario en `radar/coverage-AAAA-MM-DD.json`. No mantener otra lista cerrada en prompts.
 
 ## Reglas de frescura
 
@@ -23,8 +23,13 @@ Este archivo mantiene el inventario de fuentes. El flujo y las reglas están en 
 | Computrabajo | Listado público por término | Fechas relativas/localizadas | Normalizar fecha; abrir el aviso original |
 | BecasIT | Listado público | La fecha puede no estar publicada | Confirmar vigencia y fecha; de lo contrario no promover |
 | EmpleosIT | RSS público | Algunos ítems no incluyen fecha estructurada | No asignar la fecha del RSS como fecha de publicación |
+| Jobicy | [API pública](https://jobicy.com/jobs-rss-feed) | El enlace gratuito lleva a Jobicy y el feed cubre hasta 7 días | Señal en `unverified`; verificar anuncio original, vigencia y Argentina |
+| Himalayas | [API pública](https://himalayas.app/docs/remote-jobs-api) con filtro `country=AR` | Feed actualizado cada 24 h; restricciones de país/huso pueden cambiar | Señal en `unverified`; verificar anuncio original y condiciones |
+| Remotive | [API pública](https://remotive.com/remote-jobs/api) | Publicación demorada 24 h; región remota puede ser ambigua | Señal en `unverified`; atribuir a Remotive y verificar empleador |
+| Arbeitnow | [API pública](https://www.arbeitnow.com/blog/job-board-api) con foco europeo | Pocas oportunidades elegibles desde Argentina | Conservar solo remoto global explícito como señal `unverified` |
 | Greenhouse | API oficial por board token (`scripts/ats_boards.json`) | Es un feed por empresa; `updated_at` no equivale a primera publicación | Usar `first_published`, filtrar rol/ubicación y pasar por el filtro común de 3 días |
 | Lever | API oficial por board token (`scripts/ats_boards.json`) | Es un feed por empresa; algunas fechas o ubicaciones pueden faltar | Usar `createdAt`, filtrar rol/ubicación y pasar por el filtro común de 3 días |
+| Ashby | [Posting API pública](https://developers.ashbyhq.com/docs/public-job-posting-api) por board | No equivale a la API privada de gestión de empleos | Usar `publishedAt`, filtrar rol/ubicación y validar el aviso |
 
 El filtro de frescura común corre antes de `seen_jobs` y antes de escribir el TSV; lo desconocido no se registra como oportunidad fresca.
 
@@ -33,13 +38,17 @@ El filtro de frescura común corre antes de `seen_jobs` y antes de escribir el T
 | Fuente | Qué revisar | Límite |
 |---|---|---|
 | Portal de Empleos UADE | Carrera del usuario **y “sin carrera específica”**; número, fecha, requisitos, jornada y ubicación | Sesión de Nacho; solo lectura |
+| Startup Jobs Argentina | Revisar ofertas nuevas y confirmar requisitos en la empresa/ATS | Fuente prioritaria de startups argentinas; fecha del agregador no basta |
 | LinkedIn Jobs | Consultas separadas por soporte, sistemas, datos, trainee/intern y operaciones/tecnología | Si navegador/API limita, marcar cobertura parcial |
 | X | Consultas simples y cortas en “Latest”; solo anuncio concreto con enlace oficial | Mucho ruido; tweets conversacionales no cuentan |
 | Bumeran, ZonaJobs, Indeed, Jooble | Buscar en web/navegador cuando el scraper bloquee o falle | Metabuscadores y contenido repetido; validar en el empleador |
-| Wellfound, FirstJob | Revisión en navegador cuando estén disponibles | Login/SPA; no automatizar autenticación |
+| Wellfound, FirstJob, Startup Jobs | Revisión en navegador cuando estén disponibles | Login/SPA o fecha ambigua; validar anuncio original |
+| Vibe Coding Jobs, Vibehackers | Exploración de roles y startups | Agregadores/comunidad; no contar hasta confirmar empresa/ATS y Argentina |
 | Páginas de carrera | ATS y carreras oficiales de empleadores relevantes | No recorrer catálogos ilimitados; priorizar fecha, Argentina y etapa inicial |
 
 Si una fuente falla, probar una sola vez desde el navegador disponible. Registrar `sin resultados`, `parcial/error` o `no verificada`; no presentar un fallo como búsqueda completa.
+
+Outlier, Alignerr, DataAnnotation y Prolific son plataformas de tareas de IA, no empleos con jornada garantizada. YC Events y Appgentina son networking/eventos. Todos tienen ID propio en el catálogo para que no desaparezcan del recorrido; no se mezclan con las vacantes. La prioridad de búsqueda es: Startups Argentina, luego part-time en Argentina, luego startups globales part-time que acepten Argentina, y finalmente otros matches fuertes. Full-time solo con match claramente alto o sueldo competitivo.
 
 ## ATS oficiales habilitados
 
@@ -47,15 +56,15 @@ Los ATS exponen APIs oficiales útiles para una lista curada de empleadores, sin
 
 - **Greenhouse Job Board API:** `GET /v1/boards/{board_token}/jobs?content=true` publica trabajos y descripciones sin auth. [Docs](https://docs.greenhouse.io/job-board.html)
 - **Lever Postings API:** devuelve avisos publicados por empresa; no ofrece búsqueda global de texto. [Docs oficiales en GitHub](https://github.com/lever/postings-api)
-- **Ashby:** su API `jobPosting.list` requiere permiso `jobsRead`; para exponer avisos hay que limitarse a los publicados/listados. [Docs](https://developers.ashbyhq.com/reference/jobpostinglist)
+- **Ashby:** la [Posting API pública](https://developers.ashbyhq.com/docs/public-job-posting-api) expone avisos publicados por board; no usar la API privada `jobPosting.list`.
 
-`--scrape all` consulta el tablero Greenhouse de Sezzle y los tableros Lever de RYZ Labs, Emi Labs, Sauce, Aleph y Flex, definidos en `scripts/ats_boards.json`. Se verificó que cada identificador responde a su API pública. El adaptador mantiene sólo avisos de áreas relacionadas y ubicaciones Argentina/LatAm/remotas; las fechas faltantes quedan fuera de matches frescos. Agregá un empleador al JSON solo después de verificar su board público y elegibilidad geográfica.
+`--scrape all` consulta los tableros Greenhouse, Lever y Ashby definidos en `scripts/ats_boards.json`. El adaptador mantiene sólo avisos de áreas relacionadas y ubicaciones Argentina/LatAm/remotas; las fechas faltantes quedan fuera de matches frescos. Agregá un empleador al JSON solo después de verificar su board público y elegibilidad geográfica.
 
-Greenhouse expone `first_published` en su API; Lever expone `createdAt`. No usar `updated_at` para rejuvenecer una publicación. [Documentación Greenhouse](https://docs.greenhouse.io/job-board.html) · [Documentación Lever](https://github.com/lever/postings-api). Ashby queda diferido: su endpoint documentado requiere `jobsRead`, y no se encontró un endpoint público sin credenciales adecuado. No se scrapean endpoints privados ni se automatizan postulaciones.
+Greenhouse expone `first_published`; Lever expone `createdAt`; Ashby Posting API expone `publishedAt`. No usar `updated_at` para rejuvenecer una publicación. [Greenhouse](https://docs.greenhouse.io/job-board.html) · [Lever](https://github.com/lever/postings-api) · [Ashby](https://developers.ashbyhq.com/docs/public-job-posting-api). No se automatizan postulaciones.
 
 ## Fuentes apagadas o fuera de la pasada diaria
 
 - Telegram: sin canales activos de calidad; no se consulta hasta verificar uno nuevo.
 - Bumeran: manual/condicional a que la sesión o navegador funcione; no anunciar cero resultados por fallo.
 - Wellfound: SPA con login; manual.
-- Workana, Tecnoempleo y microtareas de anotación: no forman parte del objetivo de pasantía/junior IT en Argentina; incluir solo si Nacho amplía el alcance.
+- Workana y Tecnoempleo no están en el catálogo actual. Las plataformas de tareas de IA sí se revisan en un carril separado por pedido explícito de Nacho.

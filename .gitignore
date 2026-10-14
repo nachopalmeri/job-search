@@ -1,6 +1,11 @@
 __pycache__/
 *.pyc
 radar/daily-*.tsv
+radar/secondary-*.tsv
+radar/unverified-*.tsv
+radar/estafas-*.tsv
+radar/enrichment-*.json
+radar/coverage-*.json
 radar/discoveries-*.md
 radar/seen_jobs.json
 .secrets/

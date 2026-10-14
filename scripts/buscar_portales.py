@@ -46,6 +46,7 @@ BASE_LINKS = {
 
 LINKEDIN_URL = "https://www.linkedin.com/jobs/search"
 MAX_AGE_DAYS = 3
+AUTOMATED_SOURCES = ("greenhouse", "lever", "ashby", "startups", "yc", "speedrun", "cosign", "getonbrd", "torre", "computrabajo", "becasit", "empleosit", "jobicy", "himalayas", "remotive", "arbeitnow", "linkedin")
 LINKEDIN_MAX_AGE_DAYS = MAX_AGE_DAYS
 LINKEDIN_QUERIES = [
     "pasantía",
@@ -407,6 +408,8 @@ def _filter_fresh(jobs, portal, max_age_days=MAX_AGE_DAYS, today=None, unverifie
         elif posted > today:
             future += 1
             unverified.append((job, "fecha futura; requiere validar el aviso original"))
+        elif "GEO_NO_VERIFICADA" in str(job.get("estado", "")):
+            unverified.append((job, "elegibilidad geográfica no verificable; confirmar el aviso original"))
         elif (today - posted).days > max_age_days:
             age = (today - posted).days
             if age <= 14:
@@ -424,7 +427,7 @@ def _filter_fresh(jobs, portal, max_age_days=MAX_AGE_DAYS, today=None, unverifie
                 values = [portal] + [job.get(k, "") for k in ("fecha", "titulo", "empresa", "ubicacion", "modalidad", "jornada", "estado", "url", "nuevo", "tracker", "job_id", "descripcion")] + [reason]
                 fh.write("|".join(re.sub(r"\s+", " ", str(v)).replace("|", "/")[:8000] for v in values) + "\n")
     if unverified or secondary or stale:
-        print(f"  -> Vigencia {portal}: {len(fresh)} vigentes; {stale} antiguos; {future} futuros y {len(unverified)-future} sin fecha verificable" + (f" (detalle: {unverified_path})" if unverified_path and unverified else ""))
+        print(f"  -> Vigencia {portal}: {len(fresh)} vigentes; {stale} antiguos; {future} futuros y {len(unverified)-future} pendientes de fecha, fuente o elegibilidad" + (f" (detalle: {unverified_path})" if unverified_path and unverified else ""))
     return fresh, [job for job, _ in secondary]
 
 
@@ -1056,6 +1059,126 @@ def scrape_empleosit():
     return jobs
 
 
+def scrape_jobicy(pages=2):
+    """Feed público de Jobicy; las fichas quedan pendientes de verificación primaria."""
+    jobs, seen = [], set()
+    cursor = None
+    for _ in range(pages):
+        params = {"count": 200}
+        if cursor:
+            params["cursor"] = cursor
+        data = _get_json("https://jobicy.com/api/v2/remote-jobs?" + urlencode(params))
+        if not isinstance(data, dict) or data.get("success") is False or not isinstance(data.get("jobs"), list):
+            raise ValueError("respuesta Jobicy inválida")
+        for row in data["jobs"]:
+            job_id = str(row.get("id") or "")
+            title = _clean(row.get("jobTitle"))
+            location = _clean(row.get("jobGeo"))
+            if not job_id or job_id in seen or not title or _is_senior(title) or not _tech_entry(title) or not _remote_ok(location):
+                continue
+            seen.add(job_id)
+            link = row.get("url") or ""
+            if not link.startswith("https://"):
+                continue
+            jobs.append({
+                "fecha": row.get("pubDate") or "", "titulo": title,
+                "empresa": _clean(row.get("companyName")), "ubicacion": location,
+                "modalidad": "Remoto", "jornada": ", ".join(row.get("jobType") or []),
+                "estado": "GEO_NO_VERIFICADA", "url": link, "job_id": job_id,
+                "descripcion": _clean(re.sub(r"<[^>]+>", " ", row.get("jobDescription") or row.get("jobExcerpt") or ""))[:8000],
+            })
+        cursor = data.get("nextCursor")
+        if not cursor:
+            break
+    print(f"  -> Jobicy: {len(jobs)} señales relevantes; validar empleador/ATS y Argentina")
+    return jobs
+
+
+def scrape_himalayas():
+    """Búsqueda pública acotada a AR; no presume que el aviso original esté vigente."""
+    jobs, seen = [], set()
+    for query in ("intern", "junior", "trainee", "QA", "AI"):
+        params = urlencode({"country": "AR", "q": query, "sort": "recent"})
+        data = _get_json("https://himalayas.app/jobs/api/search?" + params)
+        if not isinstance(data, dict) or not isinstance(data.get("jobs"), list):
+            raise ValueError("respuesta Himalayas inválida")
+        for row in data["jobs"]:
+            job_id = str(row.get("guid") or "")
+            title = _clean(row.get("title"))
+            restrictions = row.get("locationRestrictions") or []
+            allowed = not restrictions or any(str(place).upper() in {"AR", "ARG", "ARGENTINA"} for place in restrictions)
+            link = row.get("applicationLink") or ""
+            if not job_id or job_id in seen or not title or _is_senior(title) or not _tech_entry(title) or not allowed or not link.startswith("https://"):
+                continue
+            seen.add(job_id)
+            jobs.append({
+                "fecha": row.get("pubDate") or "", "titulo": title,
+                "empresa": _clean(row.get("companyName")),
+                "ubicacion": "Argentina" if restrictions else "Worldwide",
+                "modalidad": "Remoto", "jornada": _clean(row.get("employmentType")),
+                "estado": "GEO_NO_VERIFICADA", "url": link, "job_id": job_id,
+                "descripcion": _clean(re.sub(r"<[^>]+>", " ", row.get("description") or row.get("excerpt") or ""))[:8000],
+            })
+    print(f"  -> Himalayas: {len(jobs)} señales relevantes; validar empleador/ATS y Argentina")
+    return jobs
+
+
+def scrape_remotive():
+    """API pública de Remotive; su feed tiene demoras y se confirma en origen."""
+    jobs, seen = [], set()
+    for query in ("intern", "junior", "trainee"):
+        url = "https://remotive.com/api/remote-jobs?" + urlencode({"search": query, "limit": 100})
+        data = _get_json(url)
+        if not isinstance(data, dict) or not isinstance(data.get("jobs"), list):
+            raise ValueError("respuesta Remotive inválida")
+        for row in data["jobs"]:
+            job_id = str(row.get("id") or "")
+            title = _clean(row.get("title"))
+            location = _clean(row.get("candidate_required_location"))
+            link = row.get("url") or ""
+            if not job_id or job_id in seen or not title or _is_senior(title) or not _tech_entry(title) or not _remote_ok(location) or not link.startswith("https://"):
+                continue
+            seen.add(job_id)
+            jobs.append({
+                "fecha": row.get("publication_date") or "", "titulo": title,
+                "empresa": _clean(row.get("company_name")), "ubicacion": location,
+                "modalidad": "Remoto", "jornada": _clean(row.get("job_type")),
+                "estado": "GEO_NO_VERIFICADA", "url": link, "job_id": job_id,
+                "descripcion": _clean(re.sub(r"<[^>]+>", " ", row.get("description") or ""))[:8000],
+            })
+    print(f"  -> Remotive: {len(jobs)} señales relevantes; validar empleador/ATS y Argentina")
+    return jobs
+
+
+def scrape_arbeitnow():
+    """API pública con foco europeo; solo conserva candidatos con alcance global explícito."""
+    data = _get_json("https://www.arbeitnow.com/api/job-board-api")
+    if not isinstance(data, dict) or not isinstance(data.get("data"), list):
+        raise ValueError("respuesta Arbeitnow inválida")
+    jobs = []
+    for row in data["data"]:
+        title = _clean(row.get("title"))
+        location = _clean(row.get("location"))
+        link = row.get("url") or ""
+        if not row.get("remote") or not title or _is_senior(title) or not _tech_entry(title) or not _remote_ok(location) or not link.startswith("https://"):
+            continue
+        created = row.get("created_at")
+        try:
+            posted = datetime.fromtimestamp(float(created), tz=timezone.utc).date().isoformat() if created else ""
+        except (ValueError, TypeError, OSError, OverflowError):
+            posted = ""
+        jobs.append({
+            "fecha": posted, "titulo": title,
+            "empresa": _clean(row.get("company_name")), "ubicacion": location,
+            "modalidad": "Remoto", "jornada": "",
+            "estado": "GEO_NO_VERIFICADA", "url": link,
+            "job_id": str(row.get("slug") or ""),
+            "descripcion": _clean(re.sub(r"<[^>]+>", " ", row.get("description") or ""))[:8000],
+        })
+    print(f"  -> Arbeitnow: {len(jobs)} señales globales; validar empleador/ATS y Argentina")
+    return jobs
+
+
 def scrape_telegram_feeds():
     jobs = []
     if yaml is None or not FEEDS_YAML.exists():
@@ -1103,7 +1226,7 @@ def main():
     ap = argparse.ArgumentParser(description="Busqueda diaria de pasantias IT Argentina")
     ap.add_argument("--links", action="store_true", help="imprimir links de busqueda prearmados")
     ap.add_argument("--open", action="store_true", help="abrir links en el navegador")
-    ap.add_argument("--scrape", choices=["linkedin", "cosign", "startups", "yc", "speedrun", "getonbrd", "torre", "computrabajo", "becasit", "empleosit", "greenhouse", "lever", "ashby", "telegram", "bumeran", "uade", "wellfound", "all"], help="scrapeo de avisos")
+    ap.add_argument("--scrape", choices=["linkedin", "cosign", "startups", "yc", "speedrun", "getonbrd", "torre", "computrabajo", "becasit", "empleosit", "jobicy", "himalayas", "remotive", "arbeitnow", "greenhouse", "lever", "ashby", "telegram", "bumeran", "uade", "wellfound", "all"], help="scrapeo de avisos")
     ap.add_argument("--kw", default="pasantia", help="keyword para Computrabajo; LinkedIn usa familias curadas de consultas")
     ap.add_argument("--uade-text", type=Path, help="texto copiado de Búsquedas sin carrera específica en la sesión UADE")
     ap.add_argument("--write", action="store_true", help="guardar en radar/daily-YYYY-MM-DD.tsv y actualizar seen_jobs.json")
@@ -1143,7 +1266,7 @@ def main():
             secondary_path = None
         # `all` means sources that work unattended. Login/captcha and disabled feeds remain explicit/manual.
         # ATS/empleadores oficiales primero: si un agregador replica el aviso, se conserva la URL primaria.
-        selected = ["greenhouse", "lever", "ashby", "startups", "yc", "speedrun", "cosign", "getonbrd", "torre", "computrabajo", "becasit", "empleosit", "linkedin"] if args.scrape == "all" else [args.scrape]
+        selected = list(AUTOMATED_SOURCES) if args.scrape == "all" else [args.scrape]
         if args.scrape == "all" and args.uade_text:
             selected.append("uade")
         fingerprints_today = set()
@@ -1201,6 +1324,14 @@ def main():
                 jobs = _safe_source(name, scrape_becasit)
             elif name == "empleosit":
                 jobs = _safe_source(name, scrape_empleosit)
+            elif name == "jobicy":
+                jobs = _safe_source(name, scrape_jobicy)
+            elif name == "himalayas":
+                jobs = _safe_source(name, scrape_himalayas)
+            elif name == "remotive":
+                jobs = _safe_source(name, scrape_remotive)
+            elif name == "arbeitnow":
+                jobs = _safe_source(name, scrape_arbeitnow)
             elif name == "telegram":
                 jobs = _safe_source(name, scrape_telegram_feeds)
             elif name == "bumeran":
