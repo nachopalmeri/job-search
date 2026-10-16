@@ -5,7 +5,7 @@ Temperley, Buenos Aires | +54 9 11 5509-0832 | ignaciopalmeri1@gmail.com | linke
 
 ## PERFIL
 
-Estudiante de 2.º año de la Licenciatura en Gestión de Tecnologías de la Información (UADE), con formación en fundamentos de redes y administración Linux. En proyectos personales desarrollé aplicaciones, trabajé con autenticación y pruebas, y documenté decisiones técnicas con apoyo de herramientas de IA y revisión propia. Quiero comenzar mi carrera en ciberseguridad aprendiendo de los equipos de inteligencia de amenazas, detección, respuesta a incidentes y gobierno de seguridad. Aporto curiosidad, pensamiento crítico y experiencia de atención al cliente en situaciones de alta demanda.
+Estudiante de 2.º año de la Licenciatura en Gestión de Tecnologías de la Información (UADE), en formación en redes, Linux y programación. Construyo proyectos personales con asistencia de herramientas de IA: defino el problema, pruebo las soluciones y reviso y adapto los resultados. Quiero comenzar mi carrera en ciberseguridad y aprender de los equipos de inteligencia de amenazas, detección, respuesta a incidentes y gobierno de seguridad. Aporto curiosidad, pensamiento crítico y experiencia de atención al cliente en situaciones de alta demanda.
 
 ## EDUCACIÓN
 
@@ -20,11 +20,11 @@ Estudiante de 2.º año de la Licenciatura en Gestión de Tecnologías de la Inf
 ## PROYECTOS PERSONALES
 
 **JobBot - bot y dashboard de búsqueda laboral** | 2026 | Python, FastAPI, Next.js, PostgreSQL, Git
-- Construí un bot que reúne ofertas, filtra resultados y envía alertas; desarrollé un dashboard web que utilizo en mi propia búsqueda laboral.
-- Trabajé en un dashboard con autenticación y sesión web mediante cookie HttpOnly, junto con pruebas automatizadas de la aplicación. Revisé los cambios generados con asistencia de IA. Repositorio: github.com/nachopalmeri/jobbot
+- Proyecto personal desarrollado con asistencia de IA: definí funcionalidades, probé y ajusté un bot que reúne y filtra ofertas y envía alertas, más un dashboard que uso en mi búsqueda laboral.
+- Trabajé en la autenticación y sesión web del dashboard mediante cookie HttpOnly y en pruebas automatizadas; revisé los cambios generados con IA. Repositorio: github.com/nachopalmeri/jobbot
 
 **Agents System - flujos personales de desarrollo asistido por IA** | 2026 | Git, Python, Markdown
-- Organicé flujos para planificar, revisar, probar y documentar cambios en proyectos propios. Reviso y adapto los resultados de los agentes antes de usarlos. Repositorio: github.com/nachopalmeri/agents-system
+- Proyecto personal creado con asistencia de IA: organicé flujos para planificar, revisar, probar y documentar cambios. Reviso y adapto los resultados de los agentes antes de usarlos. Repositorio: github.com/nachopalmeri/agents-system
 
 ## EXPERIENCIA LABORAL
 
@@ -34,8 +34,8 @@ Estudiante de 2.º año de la Licenciatura en Gestión de Tecnologías de la Inf
 
 ## HABILIDADES
 
-- Redes y sistemas: fundamentos de TCP/IP, direccionamiento IP, switching, Linux, Bash y línea de comandos.
-- Desarrollo y herramientas: Python, Git/GitHub, pruebas con pytest y Playwright; documentación técnica.
+- Redes y sistemas en aprendizaje: fundamentos de TCP/IP, direccionamiento IP y switching (curso Cisco); Linux, Bash y línea de comandos (curso RH124 y práctica personal).
+- Programación y herramientas en aprendizaje: Python (proyectos personales asistidos por IA), Java (cursada universitaria), Git/GitHub y práctica de pruebas con pytest y Playwright.
 - Transferibles: análisis de problemas, comunicación, trabajo colaborativo y aprendizaje autónomo.
 
 ## IDIOMAS Y DISPONIBILIDAD
