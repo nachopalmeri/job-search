@@ -21,7 +21,7 @@ Estudiante de 2.º año de la Licenciatura en Gestión de Tecnologías de la Inf
 
 **JobBot - bot y dashboard de búsqueda laboral** | 2026 | Python, FastAPI, Next.js, PostgreSQL, Git
 - Construí un bot que reúne ofertas, filtra resultados y envía alertas; desarrollé un dashboard web que utilizo en mi propia búsqueda laboral.
-- Trabajé con autenticación, cookies HttpOnly, validación de archivos y pruebas automatizadas de rutas protegidas. Documenté estas medidas y revisé los cambios generados con asistencia de IA. Repositorio: github.com/nachopalmeri/jobbot
+- Trabajé en un dashboard con autenticación y sesión web mediante cookie HttpOnly, junto con pruebas automatizadas de la aplicación. Revisé los cambios generados con asistencia de IA. Repositorio: github.com/nachopalmeri/jobbot
 
 **Agents System - flujos personales de desarrollo asistido por IA** | 2026 | Git, Python, Markdown
 - Organicé flujos para planificar, revisar, probar y documentar cambios en proyectos propios. Reviso y adapto los resultados de los agentes antes de usarlos. Repositorio: github.com/nachopalmeri/agents-system
