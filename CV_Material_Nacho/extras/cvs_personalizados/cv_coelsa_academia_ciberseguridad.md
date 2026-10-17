@@ -1,43 +1,52 @@
-# CV COELSA - Academia de Ciberseguridad
-
 **Ignacio Palmeri**
-Temperley, Buenos Aires | +54 9 11 5509-0832 | ignaciopalmeri1@gmail.com | linkedin.com/in/ignaciopalmeri | github.com/nachopalmeri | ignaciopalmeri.dev
+Jóvenes Talentos – Academia de Ciberseguridad
+
+Temperley, Buenos Aires | +54 9 11 5509-0832 | ignaciopalmeri1@gmail.com
+
+linkedin.com/in/ignaciopalmeri | github.com/nachopalmeri | ignaciopalmeri.dev
 
 ## PERFIL
 
-Estudiante de 2.º año de la Licenciatura en Gestión de Tecnologías de la Información (UADE), en formación en redes, Linux y programación. Construyo proyectos personales con asistencia de herramientas de IA: defino el problema, pruebo las soluciones y reviso y adapto los resultados. Quiero comenzar mi carrera en ciberseguridad y aprender de los equipos de inteligencia de amenazas, detección, respuesta a incidentes y gobierno de seguridad. Aporto curiosidad, pensamiento crítico y experiencia de atención al cliente en situaciones de alta demanda.
+Estudiante de segundo año de Gestión de Tecnologías de la Información en UADE, con formación inicial en redes y Linux. Quiero desarrollarme en ciberseguridad y aprender mediante desafíos reales de investigación de amenazas, detección, respuesta a incidentes y gobierno de seguridad. Aporto curiosidad técnica, análisis de problemas y experiencia resolviendo situaciones operativas y atendiendo personas.
 
-## EDUCACIÓN
+## EDUCACIÓN Y FORMACIÓN
 
-**Licenciatura en Gestión de Tecnologías de la Información - UADE** | Mar 2025 - presente
-- 2.º año; 15 de 40 materias aprobadas; promedio 8,2/10. Cursada nocturna.
+**Licenciatura en Gestión de Tecnologías de la Información — UADE** | Mar 2025–actualidad
 
-## FORMACIÓN COMPLEMENTARIA
+Segundo año | 15/40 materias aprobadas | Promedio: 8,2/10 | Cursada nocturna
 
-- **CCNA: Introduction to Networks - Cisco Networking Academy** | 2026. Curso aprobado con insignia digital verificable en Credly; fundamentos de direccionamiento IP, conectividad y switching.
-- **Red Hat System Administration I (RH124) - Red Hat Academy** | 2025. Curso de administración Linux finalizado.
+**CCNA: Introduction to Networks — Cisco Networking Academy / UADE** | 2026
 
-## PROYECTOS PERSONALES
+Curso aprobado: fundamentos de TCP/IP, direccionamiento IP, conectividad y switching. Insignia: credly.com/users/ignacio-palmeri.a13864b6
 
-**JobBot - bot y dashboard de búsqueda laboral** | 2026 | Python, FastAPI, Next.js, PostgreSQL, Git
-- Proyecto personal desarrollado con asistencia de IA: definí funcionalidades, probé y ajusté un bot que reúne y filtra ofertas y envía alertas, más un dashboard que uso en mi búsqueda laboral.
-- Trabajé en la autenticación y sesión web del dashboard mediante cookie HttpOnly y en pruebas automatizadas; revisé los cambios generados con IA. Repositorio: github.com/nachopalmeri/jobbot
+**Red Hat System Administration I (RH124) — Red Hat Academy** | 2025
 
-**Agents System - flujos personales de desarrollo asistido por IA** | 2026 | Git, Python, Markdown
-- Proyecto personal creado con asistencia de IA: organicé flujos para planificar, revisar, probar y documentar cambios. Reviso y adapto los resultados de los agentes antes de usarlos. Repositorio: github.com/nachopalmeri/agents-system
+Administración Linux y línea de comandos.
 
-## EXPERIENCIA LABORAL
+## PROYECTOS
 
-**Atención al cliente y operaciones - Grido** | Oct 2024 - presente
-- Atiendo consultas, resuelvo situaciones operativas en el momento y trabajo en equipo bajo alta demanda.
-- Realizo tareas de caja, recepción de mercadería y control de inventario.
+**JobBot — asistente de búsqueda laboral con IA** | Python, FastAPI, Next.js, PostgreSQL
 
-## HABILIDADES
+Construí un bot y dashboard para reunir y filtrar ofertas mediante APIs y modelos de lenguaje. Implementé autenticación con JWT y cookie HttpOnly, y trabajé con pruebas automatizadas. github.com/nachopalmeri/jobbot
 
-- Redes y sistemas en aprendizaje: fundamentos de TCP/IP, direccionamiento IP y switching (curso Cisco); Linux, Bash y línea de comandos (curso RH124 y práctica personal).
-- Programación y herramientas en aprendizaje: Python (proyectos personales asistidos por IA), Java (cursada universitaria), Git/GitHub y práctica de pruebas con pytest y Playwright.
-- Transferibles: análisis de problemas, comunicación, trabajo colaborativo y aprendizaje autónomo.
+**Agents System — workflows de desarrollo asistido por IA** | Git, Python, Markdown
 
-## IDIOMAS Y DISPONIBILIDAD
+Organicé flujos personales para planificar, revisar, probar y documentar cambios; verifico las sugerencias antes de incorporarlas. github.com/nachopalmeri/agents-system
 
-Español nativo. Inglés B1 (intermedio), autoevaluado y sin certificación formal; leo documentación técnica en inglés. Disponibilidad para jornada completa presencial en Buenos Aires.
+**FranquiYA — prototipo de gestión de operaciones** | React, TypeScript, FastAPI, SQLite
+
+Desarrollé funcionalidades de inventario, facturas, turnos y auditoría, con API REST, validación y pruebas. github.com/nachopalmeri/FranquiYA
+
+## EXPERIENCIA
+
+**Atención al cliente y operaciones — Grido (franquicia)** | Oct 2023–actualidad
+
+Atiendo consultas y resuelvo situaciones operativas en un punto de venta de alto tráfico. Realizo caja, conciliación, recepción de mercadería y control de inventario; armé planillas para seguir ventas e inventario.
+
+## COMPETENCIAS
+
+Redes: fundamentos TCP/IP, direccionamiento IP y switching | Sistemas: Linux (RHEL/Ubuntu), Bash y CLI | Desarrollo: Python en proyectos, Java en formación, APIs REST, PostgreSQL, SQLite | Herramientas: Git/GitHub | Fortalezas: investigación autónoma, pensamiento crítico, comunicación y aprendizaje continuo.
+
+## IDIOMAS
+
+Español nativo | Inglés B1, autoevaluado y sin certificación formal; lectura de documentación técnica.

@@ -136,7 +136,7 @@ def build_pipeline(inputs: list[Path], *, today: date, ledger_path: Path) -> tup
                 if evidence not in row["evidence"]:
                     row["evidence"].append(evidence)
 
-    results, eligible_window, older_window, undated = [], 0, 0, 0
+    results, within_3_days, primary_window, older_window, undated = [], 0, 0, 0, 0
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     for key, row in merged.items():
         old_key = legacy_key_for(row)
@@ -150,9 +150,11 @@ def build_pipeline(inputs: list[Path], *, today: date, ledger_path: Path) -> tup
         if age is None:
             freshness = "needs_original_date"
             undated += 1
-        elif age <= 3:
+        elif age <= 4:
             freshness = "primary"
-            eligible_window += 1
+            primary_window += 1
+            if age <= 3:
+                within_3_days += 1
         elif age <= 14:
             freshness = "secondary"
             older_window += 1
@@ -194,7 +196,8 @@ def build_pipeline(inputs: list[Path], *, today: date, ledger_path: Path) -> tup
         "run_date": today.isoformat(), "inputs": [str(path) for path in inputs],
         "input_rows_by_source": dict(source_counts), "unique_opportunities": len(results),
         "original_date_verified": sum(bool(item["publication_date_verified"]) for item in results),
-        "within_3_days_verified": eligible_window, "within_14_days_verified": older_window,
+        "within_3_days_verified": within_3_days, "within_4_days_verified": primary_window,
+        "days_5_to_14_verified": older_window,
         "date_unverified": undated,
         "pending_enrichment": sum(item["enrichment_status"] == "pending" for item in results),
         "limitations": ["No original posting page was fetched by this pipeline.",

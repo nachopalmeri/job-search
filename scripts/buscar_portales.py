@@ -40,12 +40,12 @@ BASE_LINKS = {
     "torre": "https://torre.ai/search/jobs?q={kw}",
     "cosign": "https://cosign.co/jobs",
     "startupsargentina": "https://www.startupsargentina.com/empleos",
-    "linkedin": "https://www.linkedin.com/jobs/search?keywords=pasantia&location=Argentina&f_TPR=r259200",
+    "linkedin": "https://www.linkedin.com/jobs/search?keywords=pasantia&location=Argentina&f_TPR=r345600",
     "getonbrd_ar": "https://www.getonbrd.com.ar/trabajo/{kw}",
 }
 
 LINKEDIN_URL = "https://www.linkedin.com/jobs/search"
-MAX_AGE_DAYS = 3
+MAX_AGE_DAYS = 4
 AUTOMATED_SOURCES = ("greenhouse", "lever", "ashby", "startups", "yc", "speedrun", "cosign", "getonbrd", "torre", "computrabajo", "becasit", "empleosit", "jobicy", "himalayas", "remotive", "arbeitnow", "linkedin")
 LINKEDIN_MAX_AGE_DAYS = MAX_AGE_DAYS
 LINKEDIN_QUERIES = [
@@ -82,15 +82,17 @@ LINKEDIN_QUERIES = [
     "technology graduate program Argentina",
 ]
 X_SEARCH_QUERIES = [
-    'pasantía IT Argentina',
-    'pasante sistemas Argentina',
-    'trainee tecnología Argentina',
+    'pasantía IT',
+    'pasante sistemas',
+    'trainee tecnología',
     'buscamos pasante soporte',
-    'pasantía datos Argentina',
+    'pasantía datos',
     '#EmpleoIT pasante',
-    '"buscamos" "desarrollador jr" Argentina',
-    '"buscamos" "analista junior" datos Argentina',
-    '"sumate" "automatización" junior Argentina',
+    '"buscamos" "desarrollador jr"',
+    '"buscamos" "analista junior" datos',
+    '"sumate" automatización junior',
+    '"estamos buscando" (trainee OR pasante) tecnología',
+    '"oportunidad laboral" (junior OR pasantía) IT',
 ]
 LINKEDIN_POST_QUERIES = [
     '"buscamos pasantes" (sistemas OR tecnología OR datos) Argentina',
@@ -418,7 +420,7 @@ def _filter_fresh(jobs, portal, max_age_days=MAX_AGE_DAYS, today=None, unverifie
                 stale += 1
         else:
             if portal in {"linkedin", "computrabajo", "speedrun"}:
-                unverified.append((job, "fecha del portal dentro de 3 días; confirmar primera publicación en empleador/ATS"))
+                unverified.append((job, "fecha del portal dentro de la ventana configurada; confirmar primera publicación en empleador/ATS"))
             else:
                 fresh.append(job)
     if unverified_path and unverified:

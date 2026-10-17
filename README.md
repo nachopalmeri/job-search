@@ -14,7 +14,7 @@ python scripts\buscar_portales.py --scrape all --write
 python scripts\opportunity_pipeline.py
 ```
 
-El scraper consolida fuentes públicas y tableros Greenhouse, Lever y Ashby curados en `scripts/ats_boards.json`. Incluye Jobicy, Himalayas, Remotive y Arbeitnow como señales remotas. `radar/daily-YYYY-MM-DD.tsv` conserva avisos con fecha original verificable dentro de 3 días. `radar/unverified-YYYY-MM-DD.tsv` reúne señales cuya primera publicación, empleador o elegibilidad desde Argentina falta confirmar; no equivale a recomendaciones. LinkedIn corta ante 429. UADE puede incorporarse desde el texto de la sesión abierta con `--uade-text <archivo>`; X requiere revisión manual. Cada aviso de UADE conserva su ID real, sin inventar enlaces individuales.
+El scraper consolida fuentes públicas y tableros Greenhouse, Lever y Ashby curados en `scripts/ats_boards.json`. Incluye Jobicy, Himalayas, Remotive y Arbeitnow como señales remotas. `radar/daily-YYYY-MM-DD.tsv` conserva avisos con fecha original verificable dentro de 4 días. `radar/unverified-YYYY-MM-DD.tsv` reúne señales cuya primera publicación, empleador o elegibilidad desde Argentina falta confirmar; no equivale a recomendaciones. LinkedIn corta ante 429. UADE puede incorporarse desde el texto de la sesión abierta con `--uade-text <archivo>`; X requiere revisión manual. Cada aviso de UADE conserva su ID real, sin inventar enlaces individuales.
 
 ```powershell
 python scripts\buscar_portales.py --scrape all --write --uade-text <archivo-de-texto>

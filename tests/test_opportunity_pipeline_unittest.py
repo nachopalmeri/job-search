@@ -228,6 +228,23 @@ class OpportunityRankingTests(unittest.TestCase):
 
 
 class PublicationEvidenceTests(unittest.TestCase):
+    def test_four_day_primary_window_keeps_five_day_listing_secondary(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "jobs.tsv"
+            fields = ["portal", "job_id", "empresa", "titulo", "ubicacion", "url", "fecha", "descripcion", "jornada", "modalidad"]
+            rows = [
+                {"portal": "greenhouse", "job_id": "gh-4", "empresa": "Acme", "titulo": "IT Intern", "ubicacion": "CABA", "url": "https://jobs.example/4", "fecha": "2026-10-13", "descripcion": "Python internship", "jornada": "20 hours", "modalidad": "hybrid"},
+                {"portal": "greenhouse", "job_id": "gh-5", "empresa": "Acme", "titulo": "IT Intern", "ubicacion": "CABA", "url": "https://jobs.example/5", "fecha": "2026-10-12", "descripcion": "Python internship", "jornada": "20 hours", "modalidad": "hybrid"},
+            ]
+            with path.open("w", encoding="utf-8", newline="") as stream:
+                writer = csv.DictWriter(stream, fieldnames=fields, delimiter="|")
+                writer.writeheader()
+                writer.writerows(rows)
+            result, state = build_pipeline([path], today=date(2026, 10, 17), ledger_path=Path(tmp) / "ledger.json")
+            freshness = {item["job_id"]: item["freshness_window"] for item in result}
+            self.assertEqual(freshness, {"gh-4": "primary", "gh-5": "secondary"})
+            self.assertEqual(state["metrics"]["within_4_days_verified"], 1)
+
     def test_original_sources_beat_republication_date_and_keep_provenance(self):
         evidence = [
             {"source": "linkedin", "publication_date": "2026-10-14", "url": "https://linkedin.example/1"},
