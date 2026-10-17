@@ -18,8 +18,10 @@ from pathlib import Path
 
 try:
     from scripts.opportunity_rank import rank
+    from scripts.opportunity_identity import canonical_url, identity_key, observation
 except ImportError:  # direct execution from scripts/
     from opportunity_rank import rank
+    from opportunity_identity import canonical_url, identity_key, observation
 
 ROOT = Path(__file__).resolve().parent.parent
 RADAR = ROOT / "radar"
@@ -40,14 +42,44 @@ def read_tsv(path: Path) -> list[dict]:
 
 
 def key_for(row: dict) -> str:
+    return identity_key(row)[0]
+
+
+def legacy_key_for(row: dict) -> str:
+    """Locate an earlier lifecycle key without changing its human-review fields."""
     portal, stable_id = norm(row.get("portal")), str(row.get("job_id") or "").strip()
     if portal == "uade" and stable_id:
         return f"uade:{stable_id}"
-    url = str(row.get("url") or "").split("?", 1)[0].rstrip("/").lower()
     company, title = norm(row.get("empresa")), norm(row.get("titulo"))
     if company and title:
         return f"job:{company}|{title}|{norm(row.get('ubicacion'))}"
-    return f"url:{url}" if url else f"weak:{portal}|{title}"
+    url = str(row.get("url") or "").split("?", 1)[0].rstrip("/").lower()
+    return f"url:{url}" if url else ""
+
+
+def verified_publication_evidence(evidence: list[dict], *, today: date) -> tuple[date | None, dict | None, bool]:
+    """Select the oldest trustworthy publication date and preserve its provenance.
+
+    Choosing the oldest verified original date prevents an aggregator re-index or
+    later update signal from making an old vacancy look newly published.
+    """
+    candidates = []
+    for item in evidence:
+        source = norm(item.get("source"))
+        raw_date = str(item.get("publication_date") or "")[:10]
+        if source not in ORIGINAL_DATE_SOURCES or not raw_date:
+            continue
+        try:
+            posted = date.fromisoformat(raw_date)
+        except ValueError:
+            continue
+        if posted <= today:
+            candidates.append((posted, item))
+    if not candidates:
+        return None, None, False
+    candidates.sort(key=lambda item: item[0])
+    dates = {item[0] for item in candidates}
+    return candidates[0][0], candidates[0][1], len(dates) > 1
 
 
 def load_ledger(path: Path) -> dict:
@@ -61,38 +93,60 @@ def load_ledger(path: Path) -> dict:
 def build_pipeline(inputs: list[Path], *, today: date, ledger_path: Path) -> tuple[list[dict], dict]:
     ledger = load_ledger(ledger_path)
     merged: dict[str, dict] = {}
+    url_index: dict[str, str] = {}
     source_counts = Counter()
     for path in inputs:
         for source_row in read_tsv(path):
             source = norm(source_row.get("portal"))
             source_counts[source] += 1
             key = key_for(source_row)
+            url_key = canonical_url(source_row.get("url"))
+            alias_key = url_index.get(url_key) if url_key else None
+            if key not in merged and alias_key:
+                previous = merged[alias_key]
+                previous_source = norm(previous.get("portal"))
+                previous_id = str(previous.get("job_id") or "").strip()
+                current_id = str(source_row.get("job_id") or "").strip()
+                if previous_source != source or previous_id == current_id:
+                    key = alias_key
             if key not in merged:
-                merged[key] = {**source_row, "source_urls": [], "source_names": [], "evidence": []}
+                merged[key] = {**source_row, "source_urls": [], "source_names": [], "source_job_ids": [], "source_records": [], "evidence": []}
             row = merged[key]
             url = (source_row.get("url") or "").strip()
             if url and url not in row["source_urls"]:
                 row["source_urls"].append(url)
+            if url_key:
+                url_index[url_key] = key
             if source and source not in row["source_names"]:
                 row["source_names"].append(source)
+            job_id = str(source_row.get("job_id") or "").strip()
+            if job_id and job_id not in row["source_job_ids"]:
+                row["source_job_ids"].append(job_id)
+            record = {**observation(source_row), "input": path.name}
+            if record not in row["source_records"]:
+                row["source_records"].append(record)
+            # Keep the richest available description for ranking while every
+            # source-specific version remains preserved in source_records.
+            for field in ("descripcion", "description"):
+                if len(str(source_row.get(field) or "")) > len(str(row.get(field) or "")):
+                    row[field] = source_row[field]
             if source_row.get("fecha"):
-                row["evidence"].append({"source": source, "publication_date": source_row["fecha"], "input": path.name})
+                evidence = {"source": source, "publication_date": source_row["fecha"], "url": url,
+                            "job_id": job_id, "input": path.name}
+                if evidence not in row["evidence"]:
+                    row["evidence"].append(evidence)
 
     results, eligible_window, older_window, undated = [], 0, 0, 0
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     for key, row in merged.items():
-        prior = ledger.get(key, {}) if isinstance(ledger.get(key), dict) else {}
-        source_names = row["source_names"]
-        source = source_names[0] if source_names else norm(row.get("portal"))
-        raw_date = str(row.get("fecha") or "")[:10]
-        date_verified = bool(raw_date and source in ORIGINAL_DATE_SOURCES)
-        try:
-            posted = date.fromisoformat(raw_date) if date_verified else None
-            age = (today - posted).days if posted else None
-            if age is not None and age < 0:
-                posted, age, date_verified = None, None, False
-        except ValueError:
-            posted, age, date_verified = None, None, False
+        old_key = legacy_key_for(row)
+        prior_source = ledger.get(key)
+        if not isinstance(prior_source, dict) and old_key:
+            prior_source = ledger.get(old_key)
+        prior = dict(prior_source) if isinstance(prior_source, dict) else {}
+        posted, date_evidence, date_conflict = verified_publication_evidence(row["evidence"], today=today)
+        date_verified = posted is not None
+        age = (today - posted).days if posted else None
         if age is None:
             freshness = "needs_original_date"
             undated += 1
@@ -106,17 +160,23 @@ def build_pipeline(inputs: list[Path], *, today: date, ledger_path: Path) -> tup
             freshness = "expired_window"
         job = {**row, "job_key": key, "published_date": posted.isoformat() if posted else "",
                "publication_date_verified": date_verified, "age_days": age, "freshness_window": freshness,
+               "publication_date_evidence": date_evidence, "publication_date_conflict": date_conflict,
                "first_seen": prior.get("first_seen") or today.isoformat(), "last_seen": today.isoformat(),
                "state": prior.get("state") or "Found", "review_notes": prior.get("review_notes", ""),
                "enrichment_status": prior.get("enrichment_status") or "pending",
                "next_action": "Open original posting; verify publication date, requirements, location, schedule, and status"}
-        assess_input = {**job, "published_date": job["published_date"]}
+        assess_input = {**job, "published_date": job["published_date"], "publication_date_verified": date_verified}
         assessment = rank(assess_input, today=today)
         # Keep freshness confidence from the pipeline authoritative. The ranker
         # does not know whether a date is an ATS original date or portal signal.
         if not date_verified:
             assessment["freshness"] = "unverified"
             assessment["age_days"] = None
+        if date_conflict:
+            assessment["confirm"] = list(dict.fromkeys([*assessment["confirm"], "fechas originales discrepantes entre fuentes verificables"]))
+            if assessment["eligibility"] == "eligible":
+                assessment["eligibility"] = "uncertain"
+                assessment["priority"] = round(assessment["priority"] * 0.7)
         job["assessment"] = assessment
         results.append(job)
         prior.update({"first_seen": job["first_seen"], "last_seen": today.isoformat(),
@@ -124,10 +184,12 @@ def build_pipeline(inputs: list[Path], *, today: date, ledger_path: Path) -> tup
                       "enrichment_status": job["enrichment_status"], "source_urls": job["source_urls"],
                       "title": job.get("titulo", ""), "company": job.get("empresa", "")})
         ledger[key] = prior
+        if old_key and old_key != key and isinstance(ledger.get(old_key), dict):
+            ledger[old_key].setdefault("migrated_to", key)
 
     results.sort(key=lambda item: (
         item["freshness_window"] == "primary", item["assessment"]["priority"],
-        item["assessment"]["compatibility"]), reverse=True)
+        item["assessment"]["fit_score"]), reverse=True)
     metrics = {
         "run_date": today.isoformat(), "inputs": [str(path) for path in inputs],
         "input_rows_by_source": dict(source_counts), "unique_opportunities": len(results),
