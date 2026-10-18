@@ -6,13 +6,25 @@ import unittest
 from datetime import date, time
 from pathlib import Path
 
-from scripts.opportunity_identity import identity_key
+from scripts.opportunity_identity import identity_key, observation
 from scripts.calendar_fit import parse_jornada, score_compat
 from scripts.opportunity_pipeline import build_pipeline, key_for, verified_publication_evidence
 from scripts.opportunity_rank import deduplicate, rank
 
 
 class OpportunityIdentityTests(unittest.TestCase):
+    def test_observation_preserves_distinct_application_url(self):
+        row = {
+            "portal": "cafedev", "url": "https://cafedev.co/empleos/123",
+            "apply_url": "https://jobs.lever.co/acme/123",
+            "fecha": "", "fecha_portal": "2026-10-17",
+        }
+        observed = observation(row)
+        self.assertEqual(observed["url"], "https://cafedev.co/empleos/123")
+        self.assertEqual(observed["apply_url"], "https://jobs.lever.co/acme/123")
+        self.assertEqual(observed["publication_date"], "")
+        self.assertEqual(observed["aggregator_date"], "2026-10-17")
+
     def test_same_stable_id_merges_but_different_ids_do_not(self):
         first = {"portal": "Greenhouse", "job_id": "123", "empresa": "Acme", "titulo": "Intern", "ubicacion": "CABA"}
         same = {**first, "url": "https://jobs.example/123?utm_source=li"}

@@ -15,7 +15,7 @@ def test_catalog_has_unique_sources_and_every_automatic_adapter():
     sources = load_sources()
     ids = [source["id"] for source in sources]
     assert len(ids) == len(set(ids))
-    assert {"startups", "startup_jobs_ar", "cosign", "uade", "linkedin_posts", "firstjob", "outlier", "appgentina"} <= set(ids)
+    assert {"startups", "startup_jobs_ar", "cosign", "cafedev", "uade", "linkedin_posts", "firstjob", "outlier", "appgentina"} <= set(ids)
     from scripts.buscar_portales import AUTOMATED_SOURCES
 
     assert {source["id"] for source in sources if source["access"] == "automatic"} == set(AUTOMATED_SOURCES)

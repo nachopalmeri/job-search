@@ -256,6 +256,6 @@
     "name": "CafeDev — empleos tech remotos",
     "url": "https://cafedev.co/empleos/?search=%7B%22query%22%3A%22junior%22%7D",
     "group": "remote",
-    "access": "manual"
+    "access": "automatic"
   }
 ]

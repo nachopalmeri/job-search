@@ -61,3 +61,54 @@ def test_arbeitnow_rejects_europe_only_role(monkeypatch):
     monkeypatch.setattr(search, "_get_json", fake)
     jobs = search.scrape_arbeitnow()
     assert [job["job_id"] for job in jobs] == ["ar"]
+
+
+def test_cafedev_uses_stable_ids_preserves_apply_link_and_never_promotes_index_date(monkeypatch, tmp_path):
+    rows = [
+        {
+            "id": "latam-1", "title": "Junior QA Engineer", "company_name": "Acme",
+            "url": "https://cafedev.co/empleos/acme-qa", "apply_url": "https://jobs.lever.co/acme/1",
+            "country": "CO", "countries": ["CO", "AR"], "city": "Bogotá",
+            "workplace_type": "remote", "employment_type": "full-time", "skills": ["Python"],
+            "published_at": "2026-10-17", "first_seen_at": "2026-10-18T08:00:00Z",
+        },
+        {
+            "id": "us-1", "title": "Junior Data Analyst", "company_name": "US only",
+            "url": "https://cafedev.co/empleos/us-only", "apply_url": "https://example.com/apply",
+            "country": "US", "countries": ["US"], "city": "Austin", "workplace_type": "remote",
+        },
+        {
+            "id": "unknown-1", "title": "AI Intern", "company_name": "Unknown Geo",
+            "url": "https://cafedev.co/empleos/unknown", "apply_url": "https://example.com/apply",
+            "workplace_type": "remote", "first_seen_at": "2026-10-18T08:00:00Z",
+        },
+    ]
+    calls = []
+
+    def fake(url, retries=2):
+        calls.append(url)
+        # Both catalog-wide and junior queries return the same IDs; the stable
+        # source ID must prevent duplicate observations.
+        return {"items": rows if "page=1" in url else [], "page": 1, "pages": 1}
+
+    monkeypatch.setattr(search, "_get_json_with_retry", fake)
+    jobs = search.scrape_cafedev()
+
+    assert len(calls) == 2
+    assert [job["job_id"] for job in jobs] == ["latam-1", "unknown-1"]
+    assert jobs[0]["ubicacion"] == "Bogotá, Colombia (acepta Argentina)"
+    assert jobs[0]["apply_url"] == "https://jobs.lever.co/acme/1"
+    assert jobs[0]["fecha"] == ""
+    assert jobs[1]["estado"] == "GEO_NO_VERIFICADA"
+
+    unverified = tmp_path / "unverified.tsv"
+    fresh, secondary = search._filter_fresh(
+        jobs, "cafedev", today=date(2026, 10, 18), unverified_path=unverified,
+    )
+    assert fresh == []
+    assert secondary == []
+    report = unverified.read_text(encoding="utf-8")
+    assert "2026-10-17" in report  # aggregator hint, not verified original date
+    assert "2026-10-18T08:00:00Z" in report
+    assert "https://jobs.lever.co/acme/1" in report
+    assert "fecha original no verificable" in report

@@ -4,7 +4,7 @@ El catálogo completo y auditable de fuentes está en [`scripts/search_sources.j
 
 ## Reglas de frescura
 
-- Tope: **3 días de antigüedad** desde la publicación original en cada pasada.
+- Tope: **4 días de antigüedad** desde la publicación original en cada pasada.
 - Orden de evidencia: ATS/página del empleador → anuncio original del portal → post del reclutador. El índice de búsqueda, “republicado” y la fecha de scrapeo no acreditan frescura.
 - La ausencia de fecha no es fecha reciente. Marcar “no verificada” y excluir de matches activos.
 - Verificar que siga abierta y que acepte candidaturas desde Argentina antes de puntuar.
@@ -14,7 +14,7 @@ El catálogo completo y auditable de fuentes está en [`scripts/search_sources.j
 | Fuente | Método | Límite conocido | Acción |
 |---|---|---|---|
 | LinkedIn Jobs | Página pública/guest; familias de consulta acotadas | Puede responder 429; no hay que insistir ni confiar solo en el filtro temporal | Cortar al primer 429 y contrastar candidatos con fecha original |
-| Startups Argentina | Listado SSR | Algunas fichas/listados no informan fecha | Solo promover si la ficha original confirma publicación ≤3 días |
+| Startups Argentina | Listado SSR | Algunas fichas/listados no informan fecha | Solo promover si la ficha original confirma publicación ≤4 días |
 | YC Work at a Startup | Listados por familia/rol | Fecha y elegibilidad geográfica pueden faltar | Confirmar ubicación y ficha de empleo |
 | a16z Speedrun | API pública | “Remote” puede limitarse a EE. UU.; revisar país y fecha | Filtrar por ubicación y publicación original |
 | Cosign | Búsqueda pública del agregador | Fecha suele faltar; agregador mezcla empresas y mercados | No asumir frescura/Argentina por el título |
@@ -27,8 +27,9 @@ El catálogo completo y auditable de fuentes está en [`scripts/search_sources.j
 | Himalayas | [API pública](https://himalayas.app/docs/remote-jobs-api) con filtro `country=AR` | Feed actualizado cada 24 h; restricciones de país/huso pueden cambiar | Señal en `unverified`; verificar anuncio original y condiciones |
 | Remotive | [API pública](https://remotive.com/remote-jobs/api) | Publicación demorada 24 h; región remota puede ser ambigua | Señal en `unverified`; atribuir a Remotive y verificar empleador |
 | Arbeitnow | [API pública](https://www.arbeitnow.com/blog/job-board-api) con foco europeo | Pocas oportunidades elegibles desde Argentina | Conservar solo remoto global explícito como señal `unverified` |
-| Greenhouse | API oficial por board token (`scripts/ats_boards.json`) | Es un feed por empresa; `updated_at` no equivale a primera publicación | Usar `first_published`, filtrar rol/ubicación y pasar por el filtro común de 3 días |
-| Lever | API oficial por board token (`scripts/ats_boards.json`) | Es un feed por empresa; algunas fechas o ubicaciones pueden faltar | Usar `createdAt`, filtrar rol/ubicación y pasar por el filtro común de 3 días |
+| CafeDev | [API REST pública documentada](https://cafedev.co/developers/) (`GET /v1/jobs`) | `first_seen_at` es fecha de indexación; `published_at` debe contrastarse con el empleador/ATS | Descubrimiento automático; mantener `unverified` hasta verificar fecha original, vigencia y elegibilidad desde Argentina |
+| Greenhouse | API oficial por board token (`scripts/ats_boards.json`) | Es un feed por empresa; `updated_at` no equivale a primera publicación | Usar `first_published`, filtrar rol/ubicación y pasar por el filtro común de 4 días |
+| Lever | API oficial por board token (`scripts/ats_boards.json`) | Es un feed por empresa; algunas fechas o ubicaciones pueden faltar | Usar `createdAt`, filtrar rol/ubicación y pasar por el filtro común de 4 días |
 | Ashby | [Posting API pública](https://developers.ashbyhq.com/docs/public-job-posting-api) por board | No equivale a la API privada de gestión de empleos | Usar `publishedAt`, filtrar rol/ubicación y validar el aviso |
 
 El filtro de frescura común corre antes de `seen_jobs` y antes de escribir el TSV; lo desconocido no se registra como oportunidad fresca.
@@ -39,7 +40,6 @@ El filtro de frescura común corre antes de `seen_jobs` y antes de escribir el T
 |---|---|---|
 | Portal de Empleos UADE | Carrera del usuario **y “sin carrera específica”**; número, fecha, requisitos, jornada y ubicación | Sesión de Nacho; solo lectura |
 | Startup Jobs Argentina | Revisar ofertas nuevas y confirmar requisitos en la empresa/ATS | Fuente prioritaria de startups argentinas; fecha del agregador no basta |
-| CafeDev | Revisar empleos tech remotos con la búsqueda junior indicada en el catálogo | Tablero de terceros; verificar empresa, URL original, fecha de publicación y elegibilidad desde Argentina antes de incluir como oportunidad |
 | LinkedIn Jobs | Consultas separadas por soporte, sistemas, datos, trainee/intern y operaciones/tecnología | Si navegador/API limita, marcar cobertura parcial |
 | X | Consultas simples y cortas en “Latest”; solo anuncio concreto con enlace oficial | Mucho ruido; tweets conversacionales no cuentan |
 | Bumeran, ZonaJobs, Indeed, Jooble | Buscar en web/navegador cuando el scraper bloquee o falle | Metabuscadores y contenido repetido; validar en el empleador |

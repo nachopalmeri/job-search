@@ -3,6 +3,7 @@ import csv
 import json
 import re
 import sys
+import time
 import unicodedata
 import urllib.request
 from urllib.error import HTTPError
@@ -11,6 +12,7 @@ import webbrowser
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta, timezone
+from email.utils import parsedate_to_datetime
 from html import unescape
 from pathlib import Path
 
@@ -46,7 +48,7 @@ BASE_LINKS = {
 
 LINKEDIN_URL = "https://www.linkedin.com/jobs/search"
 MAX_AGE_DAYS = 4
-AUTOMATED_SOURCES = ("greenhouse", "lever", "ashby", "startups", "yc", "speedrun", "cosign", "getonbrd", "torre", "computrabajo", "becasit", "empleosit", "jobicy", "himalayas", "remotive", "arbeitnow", "linkedin")
+AUTOMATED_SOURCES = ("greenhouse", "lever", "ashby", "startups", "yc", "speedrun", "cosign", "getonbrd", "torre", "computrabajo", "becasit", "empleosit", "jobicy", "himalayas", "remotive", "arbeitnow", "linkedin", "cafedev")
 LINKEDIN_MAX_AGE_DAYS = MAX_AGE_DAYS
 LINKEDIN_QUERIES = [
     "pasantía",
@@ -108,7 +110,7 @@ EMPLEOSIT_RSS = "https://www.empleosit.com.ar/rss/"
 
 RADAR_DIR = Path(__file__).resolve().parent.parent / "radar"
 SEEN_FILE = RADAR_DIR / "seen_jobs.json"
-TSV_HEADER = "portal|fecha|titulo|empresa|ubicacion|modalidad|jornada|estado|url|nuevo|tracker|job_id|descripcion"
+TSV_HEADER = "portal|fecha|fecha_portal|titulo|empresa|ubicacion|modalidad|jornada|estado|url|nuevo|tracker|job_id|descripcion|apply_url"
 UNVERIFIED_HEADER = TSV_HEADER + "|motivo"
 TRACKER_CSV = Path(__file__).resolve().parent.parent / "tracker" / "postulaciones.csv"
 
@@ -292,7 +294,7 @@ def _emit(portal, jobs, tsv_path=None):
         tsv_path.parent.mkdir(parents=True, exist_ok=True)
         with tsv_path.open("a", encoding="utf-8") as fh:
             for j in jobs:
-                row = [j.get(k, "") for k in ["fecha", "titulo", "empresa", "ubicacion", "modalidad", "jornada", "estado", "url", "nuevo", "tracker", "job_id", "descripcion"]]
+                row = [j.get(k, "") for k in ["fecha", "fecha_portal", "titulo", "empresa", "ubicacion", "modalidad", "jornada", "estado", "url", "nuevo", "tracker", "job_id", "descripcion", "apply_url"]]
                 row = [re.sub(r"\s+", " ", str(v)).replace("|", "/")[:8000] for v in row]
                 fh.write(f"{portal}|" + "|".join(row) + "\n")
     for j in jobs:
@@ -415,7 +417,7 @@ def _filter_fresh(jobs, portal, max_age_days=MAX_AGE_DAYS, today=None, unverifie
         elif (today - posted).days > max_age_days:
             age = (today - posted).days
             if age <= 14:
-                secondary.append((job, f"publicado hace {age} días; ventana secundaria 4–14 días"))
+                secondary.append((job, f"publicado hace {age} días; ventana secundaria 5–14 días"))
             else:
                 stale += 1
         else:
@@ -426,7 +428,7 @@ def _filter_fresh(jobs, portal, max_age_days=MAX_AGE_DAYS, today=None, unverifie
     if unverified_path and unverified:
         with unverified_path.open("a", encoding="utf-8") as fh:
             for job, reason in unverified:
-                values = [portal] + [job.get(k, "") for k in ("fecha", "titulo", "empresa", "ubicacion", "modalidad", "jornada", "estado", "url", "nuevo", "tracker", "job_id", "descripcion")] + [reason]
+                values = [portal] + [job.get(k, "") for k in ("fecha", "fecha_portal", "titulo", "empresa", "ubicacion", "modalidad", "jornada", "estado", "url", "nuevo", "tracker", "job_id", "descripcion", "apply_url")] + [reason]
                 fh.write("|".join(re.sub(r"\s+", " ", str(v)).replace("|", "/")[:8000] for v in values) + "\n")
     if unverified or secondary or stale:
         print(f"  -> Vigencia {portal}: {len(fresh)} vigentes; {stale} antiguos; {future} futuros y {len(unverified)-future} pendientes de fecha, fuente o elegibilidad" + (f" (detalle: {unverified_path})" if unverified_path and unverified else ""))
@@ -567,6 +569,116 @@ def _get_json(url):
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=30) as r:
         return json.loads(r.read().decode("utf-8", errors="replace"))
+
+
+def _get_json_with_retry(url, retries=2):
+    """Retry transient public API errors, respecting Retry-After and keeping waits bounded."""
+    for attempt in range(retries + 1):
+        try:
+            return _get_json(url)
+        except HTTPError as exc:
+            transient = exc.code == 429 or 500 <= exc.code <= 599
+            if not transient or attempt >= retries:
+                raise
+            raw_delay = exc.headers.get("Retry-After", "") if exc.headers else ""
+            try:
+                delay = float(raw_delay)
+            except (TypeError, ValueError):
+                try:
+                    retry_at = parsedate_to_datetime(raw_delay)
+                    if retry_at.tzinfo is None:
+                        retry_at = retry_at.replace(tzinfo=timezone.utc)
+                    delay = max(0.0, (retry_at - datetime.now(timezone.utc)).total_seconds())
+                except (TypeError, ValueError, OverflowError):
+                    delay = float(2 ** attempt)
+            if delay > 30:
+                raise
+            time.sleep(max(0.0, delay))
+
+
+def scrape_cafedev():
+    """Discover broad and junior jobs via CafeDev's documented public REST API.
+
+    CafeDev's published_at is treated as an aggregator signal only; first_seen_at
+    is never copied into fecha because it is an indexing timestamp, not the
+    employer's original publication date. Candidates stay in the unverified
+    queue until checked against the employer/ATS.
+    """
+    base = "https://api.cafedev.co/v1/jobs"
+    jobs, seen = [], set()
+    for query in ("", "junior"):
+        params = {"limit": 100}
+        if query:
+            params["q"] = query
+        page = 1
+        while page <= 5:
+            params["page"] = page
+            payload = _get_json_with_retry(base + "?" + urlencode(params))
+            if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
+                raise ValueError("respuesta CafeDev inválida: se esperaba objeto con items")
+            items = payload["items"]
+            for row in items:
+                job_id = str(row.get("id") or "").strip()
+                title = _clean(row.get("title"))
+                company = _clean(row.get("company_name"))
+                job_url = str(row.get("url") or "").strip()
+                apply_url = str(row.get("apply_url") or "").strip()
+                job_parts, apply_parts = urlsplit(job_url), urlsplit(apply_url)
+                if (not job_id or job_id in seen or not title or not company
+                        or job_parts.scheme != "https" or job_parts.hostname != "cafedev.co"
+                        or not job_parts.path.startswith("/empleos/")
+                        or apply_parts.scheme != "https" or not apply_parts.hostname):
+                    continue
+                if _is_senior(title) or not _tech_entry(title):
+                    continue
+                seen.add(job_id)
+                countries = {str(value).strip().lower() for value in (row.get("countries") or [])}
+                country = str(row.get("country") or "").strip().lower()
+                explicitly_eligible = {str(value).strip().lower() for value in (row.get("eligible_countries") or [])}
+                if explicitly_eligible:
+                    countries = explicitly_eligible
+                if countries and not ({"ar", "argentina"} & countries):
+                    # Do not surface jobs whose explicit country eligibility excludes Argentina.
+                    continue
+                remote = str(row.get("workplace_type") or "").strip().lower() == "remote"
+                location = _clean(row.get("city"))
+                country_names = {
+                    "ar": "Argentina", "br": "Brasil", "cl": "Chile", "co": "Colombia",
+                    "cr": "Costa Rica", "mx": "México", "uy": "Uruguay", "pe": "Perú",
+                    "us": "Estados Unidos", "es": "España",
+                }
+                if country in country_names:
+                    location = f"{location}, {country_names[country]}" if location else country_names[country]
+                elif country in {"ar", "argentina"}:
+                    location = f"{location}, Argentina" if location else "Argentina"
+                elif not countries and remote:
+                    location = location or "Remote (elegibilidad por confirmar)"
+                else:
+                    location = location or "Ubicación no informada"
+                if country not in {"", "ar", "argentina"} and ({"ar", "argentina"} & countries):
+                    location = f"{location} (acepta Argentina)"
+                skills = row.get("skills") or []
+                category = _clean(row.get("category"))
+                meta = "; ".join(part for part in (
+                    f"Categoría: {category}" if category else "",
+                    f"Tecnologías/skills: {', '.join(map(str, skills))}" if skills else "",
+                    f"CafeDev first_seen_at (no es fecha de publicación): {row.get('first_seen_at')}" if row.get("first_seen_at") else "",
+                ) if part)
+                jobs.append({
+                    "fecha": "", "fecha_portal": _clean(row.get("published_at")),
+                    "titulo": title, "empresa": company, "ubicacion": location,
+                    "modalidad": "Remoto" if remote else _clean(row.get("workplace_type")),
+                    "jornada": _clean(row.get("employment_type")),
+                    "estado": "GEO_NO_VERIFICADA" if not ({"ar", "argentina"} & countries) else "",
+                    "url": job_url, "apply_url": apply_url, "job_id": job_id,
+                    "descripcion": meta,
+                })
+            pages = int(payload.get("pages") or page)
+            if page >= pages or not items:
+                break
+            page += 1
+    print(f"  -> CafeDev API: {len(jobs)} señales tecnológicas/entry; fecha original pendiente de verificar")
+    return jobs
 
 
 def _load_ats_boards(ats):
@@ -1228,7 +1340,7 @@ def main():
     ap = argparse.ArgumentParser(description="Busqueda diaria de pasantias IT Argentina")
     ap.add_argument("--links", action="store_true", help="imprimir links de busqueda prearmados")
     ap.add_argument("--open", action="store_true", help="abrir links en el navegador")
-    ap.add_argument("--scrape", choices=["linkedin", "cosign", "startups", "yc", "speedrun", "getonbrd", "torre", "computrabajo", "becasit", "empleosit", "jobicy", "himalayas", "remotive", "arbeitnow", "greenhouse", "lever", "ashby", "telegram", "bumeran", "uade", "wellfound", "all"], help="scrapeo de avisos")
+    ap.add_argument("--scrape", choices=["linkedin", "cosign", "startups", "yc", "speedrun", "getonbrd", "torre", "computrabajo", "becasit", "empleosit", "jobicy", "himalayas", "remotive", "arbeitnow", "greenhouse", "lever", "ashby", "cafedev", "telegram", "bumeran", "uade", "wellfound", "all"], help="scrapeo de avisos")
     ap.add_argument("--kw", default="pasantia", help="keyword para Computrabajo; LinkedIn usa familias curadas de consultas")
     ap.add_argument("--uade-text", type=Path, help="texto copiado de Búsquedas sin carrera específica en la sesión UADE")
     ap.add_argument("--write", action="store_true", help="guardar en radar/daily-YYYY-MM-DD.tsv y actualizar seen_jobs.json")
@@ -1314,6 +1426,8 @@ def main():
                 print(f"  -> LinkedIn expandido: {len(jobs)} únicos; {attempted_queries}/{len(linkedin_kws)} consultas intentadas{suffix}")
             elif name in ("greenhouse", "lever", "ashby"):
                 jobs = scrape_ats(name)
+            elif name == "cafedev":
+                jobs = _safe_source(name, scrape_cafedev)
             elif name == "startups":
                 jobs = _safe_source(name, scrape_startupsargentina)
             elif name == "yc":
@@ -1403,9 +1517,10 @@ def main():
                     for candidate in secondary_unique:
                         posted = _posted_date(candidate.get("fecha"))
                         age = (date.today() - posted).days if posted else ""
-                        reason = f"publicado hace {age} días; ventana secundaria 4–14 días" if age != "" else ""
-                        values = [name] + [candidate.get(k, "") for k in ("fecha", "titulo", "empresa", "ubicacion", "modalidad", "jornada", "estado", "url", "nuevo", "tracker", "job_id")] + [reason]
-                        fh.write("|".join(str(v).replace("|", "/") for v in values) + "\n")
+                        reason = f"publicado hace {age} días; ventana secundaria 5–14 días" if age != "" else ""
+                        values = [name] + [candidate.get(k, "") for k in ("fecha", "fecha_portal", "titulo", "empresa", "ubicacion", "modalidad", "jornada", "estado", "url", "nuevo", "tracker", "job_id", "descripcion", "apply_url")] + [reason]
+                        normalized = [re.sub(r"\s+", " ", str(value)).replace("|", "/")[:8000] for value in values]
+                        fh.write("|".join(normalized) + "\n")
             unique_jobs = []
             for job in jobs:
                 fingerprint = _job_fingerprint(job)

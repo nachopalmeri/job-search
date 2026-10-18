@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parent.parent
 CATALOG = Path(__file__).with_name("search_sources.json")
-STATUSES = {"pending", "consulted_with_results", "consulted_no_results", "blocked", "not_applicable"}
+STATUSES = {"pending", "consulted_with_results", "consulted_no_results", "partial", "blocked", "not_applicable"}
 
 
 def load_sources(path=CATALOG):
@@ -52,10 +52,10 @@ def mark_source(report, source_id, status, count=0, note=""):
         raise ValueError("El conteo no puede ser negativo")
     if status == "consulted_with_results" and count < 1:
         raise ValueError("Un resultado positivo requiere count >= 1")
-    if status != "consulted_with_results" and count != 0:
-        raise ValueError("Solo consulted_with_results admite count > 0")
-    if status in {"blocked", "not_applicable"} and not note.strip():
-        raise ValueError("Un bloqueo o exclusión requiere motivo")
+    if status not in {"consulted_with_results", "partial"} and count != 0:
+        raise ValueError("Solo consulted_with_results o partial admiten count > 0")
+    if status in {"partial", "blocked", "not_applicable"} and not note.strip():
+        raise ValueError("Un resultado parcial, bloqueo o exclusión requiere motivo")
     report["sources"][source_id] = {"status": status, "count": count, "note": note.strip()}
 
 
@@ -111,14 +111,17 @@ def main():
         return 0
     missing = [source["id"] for source in sources if source["id"] not in report["sources"]]
     pending = pending_sources(report) + missing
+    partial = [source_id for source_id, item in report["sources"].items() if item["status"] == "partial"]
     blocked = [source_id for source_id, item in report["sources"].items() if item["status"] == "blocked"]
     results = sum(item["count"] for item in report["sources"].values())
-    print(f"Fuentes: {len(report['sources'])}; resultados: {results}; pendientes: {len(pending)}; bloqueadas: {len(blocked)}")
+    print(f"Fuentes: {len(report['sources'])}; resultados: {results}; pendientes: {len(pending)}; parciales: {len(partial)}; bloqueadas: {len(blocked)}")
     if pending:
         print("Pendientes: " + ", ".join(pending))
     if blocked:
         print("Bloqueadas: " + ", ".join(blocked))
-    return 1 if pending or blocked else 0
+    if partial:
+        print("Parciales: " + ", ".join(partial))
+    return 1 if pending or blocked or partial else 0
 
 
 if __name__ == "__main__":
