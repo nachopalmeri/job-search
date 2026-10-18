@@ -12,9 +12,10 @@ Toolkit personal para buscar pasantías y roles junior de IT/IA/datos, evaluar a
 python scripts\source_coverage.py --init
 python scripts\buscar_portales.py --scrape all --write
 python scripts\opportunity_pipeline.py
+python scripts\cafedev_audit.py
 ```
 
-El scraper consolida fuentes públicas y tableros Greenhouse, Lever y Ashby curados en `scripts/ats_boards.json`. Incluye CafeDev mediante su API REST pública documentada y Jobicy, Himalayas, Remotive y Arbeitnow como señales remotas. `radar/daily-YYYY-MM-DD.tsv` conserva avisos con fecha original verificable dentro de 4 días. `radar/unverified-YYYY-MM-DD.tsv` reúne señales cuya primera publicación, empleador o elegibilidad desde Argentina falta confirmar; no equivale a recomendaciones. En CafeDev `first_seen_at` solo indica indexación del agregador. LinkedIn corta ante 429. UADE puede incorporarse desde el texto de la sesión abierta con `--uade-text <archivo>`; X requiere revisión manual. Cada aviso de UADE conserva su ID real, sin inventar enlaces individuales.
+El scraper consolida fuentes públicas y tableros Greenhouse, Lever y Ashby curados en `scripts/ats_boards.json`. Incluye CafeDev mediante consultas de texto amplias y paginadas con un límite local conservador; `first_seen_at` y `published_at` del agregador no sustituyen la fecha original. `radar/daily-YYYY-MM-DD.tsv` conserva avisos con fecha original verificable dentro de 4 días; `unverified-YYYY-MM-DD.tsv` reúne señales potenciales con fecha, empresa o elegibilidad pendientes. `opportunity_pipeline.py` genera `potential-review-YYYY-MM-DD.json` y `recommendations-YYYY-MM-DD.json` para separar investigación de avisos frescos. `cafedev_audit.py` audita los campos disponibles y etiqueta como desconocidos los requisitos ausentes. LinkedIn corta ante 429. UADE puede incorporarse desde el texto de la sesión abierta con `--uade-text <archivo>`; X requiere revisión manual. Cada aviso de UADE conserva su ID real, sin inventar enlaces individuales.
 
 ```powershell
 python scripts\buscar_portales.py --scrape all --write --uade-text <archivo-de-texto>
@@ -25,7 +26,9 @@ python scripts\opportunity_rank.py --input <avisos-en-json>
 
 `--links` genera también búsquedas manuales de LinkedIn Posts y X con términos de reclutadores y equipos. Los filtros de Google/X sirven para descubrir publicaciones: la antigüedad se confirma en el post original antes de registrarla como aviso reciente.
 
-La pasada manual recorre todos los IDs de `scripts/search_sources.json`: incluye UADE sin carrera específica, LinkedIn publicaciones, Wellfound, FirstJob, Vibe Coding Jobs, Vibehackers y fuentes de tareas de IA. CafeDev se cubre automáticamente. Registrá cada consulta con `python scripts\source_coverage.py --mark <id> --status consulted_no_results` (o `consulted_with_results --count N`, `partial --count N --note <alcance y bloqueo>`, `blocked --note <motivo>`, `not_applicable --note <motivo>`). `python scripts\source_coverage.py --check` devuelve 1 si quedan fuentes pendientes, parciales o bloqueadas; no equivale a cobertura completa. Las tareas de IA y los eventos se informan aparte de las vacantes.
+El catálogo actual tiene 38 fuentes, incluida Silver.dev. `source_coverage.py --init` genera `radar/source-inventory.md` y `.json` con tipo, perfil, método, frecuencia, autenticación y la última cobertura conocida. UADE sin carrera específica, LinkedIn y X conservan su revisión diaria; comunidades, eventos y gigs con baja sensibilidad temporal se marcan `not_due` y se revisan semanalmente (lunes). `source_coverage.py --check` falla solo por fuentes debidas que quedaron pendientes, parciales o bloqueadas. Las tareas de IA y eventos siguen separadas de vacantes.
+
+Para clasificar señales de startups, networking o ideas de contenido con evidencia explícita, usar `python scripts\strategic_intelligence.py --input <signals.json>`. El clasificador nunca convierte una ronda en contratación, ni envía mensajes o publica. Ver [flujo V2](docs/job-search-v2-workflow.md).
 
 La automatización diaria autorizada usa este repositorio y cierra actualizando Notion con oportunidades verificadas, ordenadas por match, y la fecha original y la fecha de alta. Si no hubo hallazgos, registra la cobertura; si Notion no está accesible, informa el bloqueo. El Excel local sigue siendo el registro oficial de postulaciones.
 

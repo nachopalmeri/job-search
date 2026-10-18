@@ -32,6 +32,7 @@ ROLE_EVIDENCE = re.compile(
     re.I,
 )
 ENTRY = re.compile(r"\b(?:pasant\w*|intern\w*|trainee|pr[aá]ctic\w*|aprendiz\w*|graduate|j[oó]venes|junior|jr|sin experiencia|primer empleo)\b", re.I)
+SENIOR_TITLE = re.compile(r"\b(?:senior|sr\.?|staff|principal|lead|director|manager|head of)\b", re.I)
 ADVANCED = re.compile(r"(?:[uú]ltimos? (?:dos|2) a[nñ]os|[uú]ltimo a[nñ]o|estudiante avanzado|3(?:er|ro|°) a[nñ]o)", re.I)
 HIGH_ENGLISH = re.compile(r"(?:ingl[eé]s|english).{0,40}(?:avanzado|fluido|biling[uü]e|c1|c2|advanced|fluent|native)", re.I)
 NATIVE_ENGLISH = re.compile(r"\b(?:near[- ]native|native)\s+(?:level\s+)?english\b|\benglish\s+(?:near[- ]native|native)\b", re.I)
@@ -274,6 +275,8 @@ def rank(job, *, today=None):
 
     if age is None:
         confirm.append("fecha original de publicación")
+    if SENIOR_TITLE.search(title) and not ENTRY.search(title):
+        confirm.append("seniority del título sugiere experiencia; revisar los años y el carácter obligatorio en la descripción original")
     status = _norm(job.get("posting_status") or job.get("job_status") or "")
     if status not in {"open", "active", "current", "published", "accepting applications"} and job.get("closed") is not False:
         confirm.append("vigencia del aviso")

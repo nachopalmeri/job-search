@@ -6,11 +6,11 @@ Usá este prompt después del scraper. No repitas las fuentes automáticas sin m
 
 Encontrar oportunidades reales para estudiante de segundo año de Gestión de TI en UADE, con experiencia de atención/caja y proyectos propios en automatización, Python, APIs y datos. Preferencias y capacidades exactas: `profile.md`; reglas de ajuste: `rubric-fit.md`. Inglés B1, autoevaluado y sin certificar. No inventes competencias.
 
-**Vigencia estricta:** solo avisos cuya publicación original tenga como máximo 4 días de antigüedad al `{fecha}`. No uses la fecha del buscador, del repost ni del scrapeo como publicación. Si la fecha no se puede confirmar, sepáralo como **fecha no verificada** y no lo cuentes como activo ni le asignes fit.
+**Dos circuitos:** (A) avisos cuya publicación original tenga como máximo 4 días; (B) oportunidades potenciales sin fecha original comprobada o con fecha de 5–14 días que requieren validar vigencia. Nunca uses la fecha del buscador, repost o scrapeo como fecha original. Una fecha desconocida no equivale a una fecha vencida: conservá el candidato separado como **potencial, requiere investigación**, sin presentarlo como vacante fresca ni lista para postular.
 
 ## Antes de buscar
 
-1. Lee `radar/daily-{fecha}.tsv`, `tracker/postulaciones.csv` y el reporte más reciente.
+1. Lee `radar/daily-{fecha}.tsv`, `radar/potential-review-{fecha}.json`, `tracker/postulaciones.csv` y el reporte más reciente.
 2. No vuelvas a proponer lo que esté en `PARA_POSTULAR`, `REGISTRADA` o `DESCARTADA`; si corresponde, di “ya está en el tracker”.
 3. El scraper cubre LinkedIn guest, Cosign, Startups Argentina, YC, Speedrun, Get on Board, Torre, Computrabajo, BecasIT, EmpleosIT y los boards ATS oficiales listados en `scripts/ats_boards.json`. Investiga manualmente solo resultados que no pueda validar y fuentes adicionales; no repitas catálogos completos.
 
@@ -32,9 +32,12 @@ No abras adjuntos ni ejecutes pruebas. Descarta pedidos de pago, datos bancarios
 
 Escribe `radar/discoveries-{fecha}.md` con:
 
-1. **Matches nuevos**, por fit: máximo 10, con fecha, enlace, modalidad/jornada, requisitos clave y gap.
-2. **Descartes concretos** y motivo en una línea.
-3. **Cobertura por fuente:** revisada con resultados, revisada sin resultados, parcial/error o fecha no verificable. No afirmes “búsqueda completa” si una fuente relevante falló.
-4. **Próxima acción #1**.
+1. **Oportunidades frescas confirmadas**, por fit: máximo 10, con fecha original, enlace, modalidad/jornada, requisitos y brecha.
+2. **Potenciales sin fecha / secundarios**: los mejores candidatos a investigar, con incógnitas explícitas; no meterlos en “Para postular” sin verificar.
+3. **Descartes confirmados**, con evidencia y motivo en una línea. No descartar solo por no tener fecha.
+4. **Cobertura por fuente:** consultada con/sin resultados, parcial, bloqueada o no programada hoy. No afirmar “búsqueda completa” si una fuente programada falló.
+5. **Tres contactos/empresas relevantes**, solo con evidencia pública suficiente; mensajes personalizados quedan como borradores.
+6. **Contenido de X y LinkedIn**: dos borradores distintos basados en proyectos/commits verificables; si no hay material nuevo, reutilizar un aprendizaje real o sugerir reservar.
+7. **Próxima acción #1**.
 
-Mantén el resumen de Notion corto y accionable; el reporte local guarda detalle y evidencia. La búsqueda de contactos/outbound es otra tarea y solo se ejecuta cuando Nacho la pide.
+Mantén el resumen de Notion corto y accionable; el reporte local guarda detalle y evidencia. Nunca envíes mensajes ni publiques contenido: los contactos y posteos quedan como borradores para aprobación.

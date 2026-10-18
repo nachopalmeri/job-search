@@ -605,15 +605,32 @@ def scrape_cafedev():
     queue until checked against the employer/ATS.
     """
     base = "https://api.cafedev.co/v1/jobs"
-    jobs, seen = [], set()
-    for query in ("", "junior"):
+    # The API's q parameter is documented for text search. A single empty
+    # query can hide roles when the board is larger than the pagination cap.
+    queries = ("", "junior", "trainee", "intern", "internship", "graduate",
+               "early career", "pasantia", "practicante", "entry level",
+               "IT support", "data analyst", "QA", "cybersecurity",
+               "automation", "business analyst")
+    jobs, seen, request_count, last_request = [], set(), 0, 0.0
+    max_requests, request_interval = 50, 1.05  # Conservative pacing; keep below 60 requests/minute.
+    for query in queries:
+        if request_count >= max_requests:
+            print(f"  -> CafeDev: alcanzado límite local de {max_requests} solicitudes; quedan consultas para la próxima pasada", file=sys.stderr)
+            break
         params = {"limit": 100}
         if query:
             params["q"] = query
         page = 1
         while page <= 5:
+            if request_count >= max_requests:
+                break
+            wait = request_interval - (time.monotonic() - last_request)
+            if request_count and wait > 0:
+                time.sleep(wait)
             params["page"] = page
             payload = _get_json_with_retry(base + "?" + urlencode(params))
+            last_request = time.monotonic()
+            request_count += 1
             if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
                 raise ValueError("respuesta CafeDev inválida: se esperaba objeto con items")
             items = payload["items"]
@@ -629,7 +646,10 @@ def scrape_cafedev():
                         or not job_parts.path.startswith("/empleos/")
                         or apply_parts.scheme != "https" or not apply_parts.hostname):
                     continue
-                if _is_senior(title) or not _tech_entry(title):
+                # Keep senior-titled records in discovery so age/seniority is
+                # assessed from the original description instead of silently
+                # disappearing at the connector boundary.
+                if not _tech_entry(title):
                     continue
                 seen.add(job_id)
                 countries = {str(value).strip().lower() for value in (row.get("countries") or [])}
@@ -677,7 +697,7 @@ def scrape_cafedev():
             if page >= pages or not items:
                 break
             page += 1
-    print(f"  -> CafeDev API: {len(jobs)} señales tecnológicas/entry; fecha original pendiente de verificar")
+    print(f"  -> CafeDev API: {len(jobs)} señales tecnológicas/entry; {request_count} solicitudes con paginación y consultas amplias; fecha original pendiente de verificar")
     return jobs
 
 

@@ -36,16 +36,21 @@ class CafeDevSourceTests(unittest.TestCase):
                 "url": "https://cafedev.co/empleos/unknown", "apply_url": "https://example.com/apply",
                 "workplace_type": "remote", "first_seen_at": "2026-10-18T08:00:00Z",
             },
+            {
+                "id": "senior-title-1", "title": "Senior Security Engineer", "company_name": "Unknown seniority",
+                "url": "https://cafedev.co/empleos/senior-security", "apply_url": "https://example.com/apply",
+                "country": "AR", "workplace_type": "remote", "skills": ["Linux", "Python"],
+            },
         ]
 
         def fake(url, retries=2):
             return {"items": rows, "page": 1, "pages": 1}
 
-        with patch.object(search, "_get_json_with_retry", side_effect=fake) as request:
+        with patch.object(search, "_get_json_with_retry", side_effect=fake) as request, patch.object(search.time, "sleep"):
             jobs = search.scrape_cafedev()
 
-        self.assertEqual(request.call_count, 2)
-        self.assertEqual([job["job_id"] for job in jobs], ["latam-1", "unknown-1"])
+        self.assertEqual(request.call_count, 16)
+        self.assertEqual([job["job_id"] for job in jobs], ["latam-1", "unknown-1", "senior-title-1"])
         self.assertEqual(jobs[0]["ubicacion"], "Bogotá, Colombia (acepta Argentina)")
         self.assertEqual(jobs[0]["apply_url"], "https://jobs.lever.co/acme/1")
         self.assertEqual(jobs[0]["fecha"], "")

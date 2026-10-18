@@ -56,6 +56,13 @@
     "access": "automatic"
   },
   {
+    "id": "silver_dev",
+    "name": "Silver.dev Jobs",
+    "url": "https://silver.dev/jobs",
+    "group": "startups_global",
+    "access": "manual"
+  },
+  {
     "id": "getonbrd",
     "name": "Get on Board",
     "url": "https://www.getonbrd.com/",

@@ -29,6 +29,24 @@ LEDGER = RADAR / "job_lifecycle.json"
 ORIGINAL_DATE_SOURCES = {"greenhouse", "lever", "uade", "ashby", "workday", "smartrecruiters"}
 
 
+def review_route(job: dict, assessment: dict) -> tuple[str, str]:
+    """Keep freshness, eligibility, and research-worthiness as separate decisions."""
+    eligibility = assessment.get("eligibility", "uncertain")
+    freshness = assessment.get("freshness", "unverified")
+    fit = float(assessment.get("fit_score", 0) or 0)
+    if eligibility == "ineligible" or job.get("closed") is True:
+        return "no_compatible", "No priorizar: hay un requisito excluyente o el aviso está cerrado."
+    if freshness == "primary" and eligibility == "eligible" and fit >= 4.5:
+        return "apply_priority", "Publicación original reciente, elegibilidad verificada y fit alto."
+    if freshness == "primary" and eligibility == "eligible" and fit >= 4.0:
+        return "good_opportunity", "Publicación original reciente y elegibilidad verificada; preparar revisión final."
+    if freshness in {"unverified", "needs_original_date"} or eligibility == "uncertain":
+        return "potential_research", "Conservar como candidata: verificar fecha original, vigencia o requisitos pendientes."
+    if freshness == "secondary" and eligibility != "ineligible":
+        return "revalidate", "Aviso de 5–14 días; comprobar que siga abierto antes de recomendarlo."
+    return "watch", "Sin prioridad diaria; conservar la evidencia y revisar si aparece una señal nueva."
+
+
 def norm(value: object) -> str:
     value = unicodedata.normalize("NFKD", str(value or "")).encode("ascii", "ignore").decode().lower()
     return re.sub(r"[^a-z0-9]+", " ", value).strip()
@@ -180,6 +198,7 @@ def build_pipeline(inputs: list[Path], *, today: date, ledger_path: Path) -> tup
                 assessment["eligibility"] = "uncertain"
                 assessment["priority"] = round(assessment["priority"] * 0.7)
         job["assessment"] = assessment
+        job["review_route"], job["review_action"] = review_route(job, assessment)
         results.append(job)
         prior.update({"first_seen": job["first_seen"], "last_seen": today.isoformat(),
                       "state": job["state"], "review_notes": job["review_notes"],
@@ -189,9 +208,11 @@ def build_pipeline(inputs: list[Path], *, today: date, ledger_path: Path) -> tup
         if old_key and old_key != key and isinstance(ledger.get(old_key), dict):
             ledger[old_key].setdefault("migrated_to", key)
 
+    route_order = {"apply_priority": 5, "good_opportunity": 4, "potential_research": 3,
+                   "revalidate": 2, "watch": 1, "no_compatible": 0}
     results.sort(key=lambda item: (
-        item["freshness_window"] == "primary", item["assessment"]["priority"],
-        item["assessment"]["fit_score"]), reverse=True)
+        route_order.get(item.get("review_route", "watch"), 0),
+        item["assessment"]["priority"], item["assessment"]["fit_score"]), reverse=True)
     metrics = {
         "run_date": today.isoformat(), "inputs": [str(path) for path in inputs],
         "input_rows_by_source": dict(source_counts), "unique_opportunities": len(results),
@@ -200,6 +221,7 @@ def build_pipeline(inputs: list[Path], *, today: date, ledger_path: Path) -> tup
         "days_5_to_14_verified": older_window,
         "date_unverified": undated,
         "pending_enrichment": sum(item["enrichment_status"] == "pending" for item in results),
+        "review_route_counts": dict(Counter(item["review_route"] for item in results)),
         "limitations": ["No original posting page was fetched by this pipeline.",
                         "No opportunity is marked eligible or ready to apply until enrichment is reviewed."],
     }
@@ -221,10 +243,16 @@ def main() -> None:
     args.ledger.write_text(json.dumps(state["ledger"], ensure_ascii=False, indent=2), encoding="utf-8")
     out = args.out or RADAR / f"enrichment-{args.today.isoformat()}.json"
     out.write_text(json.dumps(queue, ensure_ascii=False, indent=2), encoding="utf-8")
+    potential_path = out.with_name(out.stem.replace("enrichment", "potential-review") + ".json")
+    potential_path.write_text(json.dumps([item for item in queue if item["review_route"] == "potential_research"], ensure_ascii=False, indent=2), encoding="utf-8")
+    recommendations_path = out.with_name(out.stem.replace("enrichment", "recommendations") + ".json")
+    recommendations_path.write_text(json.dumps([item for item in queue if item["review_route"] in {"apply_priority", "good_opportunity"}], ensure_ascii=False, indent=2), encoding="utf-8")
     metrics_path = out.with_name(out.stem.replace("enrichment", "pipeline-metrics") + ".json")
     metrics_path.write_text(json.dumps(state["metrics"], ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(state["metrics"], ensure_ascii=False, indent=2))
     print(f"Queue: {out}")
+    print(f"Potential research queue: {potential_path}")
+    print(f"Recent recommendations queue: {recommendations_path}")
     print(f"Lifecycle ledger: {args.ledger}")
 
 

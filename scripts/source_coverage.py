@@ -10,10 +10,15 @@ from datetime import date
 from pathlib import Path
 from urllib.parse import urlparse
 
+try:
+    from scripts.source_inventory import cadence, write_inventory
+except ImportError:  # direct execution from scripts/
+    from source_inventory import cadence, write_inventory
+
 
 ROOT = Path(__file__).resolve().parent.parent
 CATALOG = Path(__file__).with_name("search_sources.json")
-STATUSES = {"pending", "consulted_with_results", "consulted_no_results", "partial", "blocked", "not_applicable"}
+STATUSES = {"pending", "not_due", "consulted_with_results", "consulted_no_results", "partial", "blocked", "not_applicable"}
 
 
 def load_sources(path=CATALOG):
@@ -36,10 +41,18 @@ def load_sources(path=CATALOG):
 
 
 def new_report(day, sources):
-    date.fromisoformat(day)
+    day_date = date.fromisoformat(day)
+
+    entries = {}
+    for source in sources:
+        not_due = cadence(source["id"]) == "Semanal" and day_date.isoweekday() != 1
+        entries[source["id"]] = {
+            "status": "not_due" if not_due else "pending", "count": 0,
+            "note": "Frecuencia semanal; próxima consulta el lunes." if not_due else "",
+        }
     return {
         "date": day,
-        "sources": {source["id"]: {"status": "pending", "count": 0, "note": ""} for source in sources},
+        "sources": entries,
     }
 
 
@@ -85,16 +98,18 @@ def main():
             added = 0
             for source in sources:
                 if source["id"] not in report["sources"]:
-                    report["sources"][source["id"]] = {"status": "pending", "count": 0, "note": ""}
+                    report["sources"][source["id"]] = new_report(args.date, [source])["sources"][source["id"]]
                     added += 1
             if added:
                 output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             print(f"Reporte existente preservado: {output}; fuentes nuevas: {added}")
+            write_inventory()
             return 0
         report = new_report(args.date, sources)
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(f"Checklist creado: {len(sources)} fuentes en {output}")
+        write_inventory()
         return 0
     if not output.exists():
         parser.error(f"No existe {output}; ejecutá --init primero")
@@ -108,19 +123,22 @@ def main():
             parser.error(str(exc))
         output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(f"{args.mark}: {args.status} ({args.count})")
+        write_inventory()
         return 0
     missing = [source["id"] for source in sources if source["id"] not in report["sources"]]
     pending = pending_sources(report) + missing
     partial = [source_id for source_id, item in report["sources"].items() if item["status"] == "partial"]
     blocked = [source_id for source_id, item in report["sources"].items() if item["status"] == "blocked"]
+    not_due = [source_id for source_id, item in report["sources"].items() if item["status"] == "not_due"]
     results = sum(item["count"] for item in report["sources"].values())
-    print(f"Fuentes: {len(report['sources'])}; resultados: {results}; pendientes: {len(pending)}; parciales: {len(partial)}; bloqueadas: {len(blocked)}")
+    print(f"Fuentes: {len(report['sources'])}; resultados: {results}; pendientes: {len(pending)}; no programadas hoy: {len(not_due)}; parciales: {len(partial)}; bloqueadas: {len(blocked)}")
     if pending:
         print("Pendientes: " + ", ".join(pending))
     if blocked:
         print("Bloqueadas: " + ", ".join(blocked))
     if partial:
         print("Parciales: " + ", ".join(partial))
+    write_inventory()
     return 1 if pending or blocked or partial else 0
 
 
