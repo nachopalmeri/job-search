@@ -39,6 +39,7 @@ El filtro de frescura común corre antes de `seen_jobs` y antes de escribir el T
 |---|---|---|
 | Portal de Empleos UADE | Carrera del usuario **y “sin carrera específica”**; número, fecha, requisitos, jornada y ubicación | Sesión de Nacho; solo lectura |
 | Startup Jobs Argentina | Revisar ofertas nuevas y confirmar requisitos en la empresa/ATS | Fuente prioritaria de startups argentinas; fecha del agregador no basta |
+| CafeDev | Revisar empleos tech remotos con la búsqueda junior indicada en el catálogo | Tablero de terceros; verificar empresa, URL original, fecha de publicación y elegibilidad desde Argentina antes de incluir como oportunidad |
 | LinkedIn Jobs | Consultas separadas por soporte, sistemas, datos, trainee/intern y operaciones/tecnología | Si navegador/API limita, marcar cobertura parcial |
 | X | Consultas simples y cortas en “Latest”; solo anuncio concreto con enlace oficial | Mucho ruido; tweets conversacionales no cuentan |
 | Bumeran, ZonaJobs, Indeed, Jooble | Buscar en web/navegador cuando el scraper bloquee o falle | Metabuscadores y contenido repetido; validar en el empleador |

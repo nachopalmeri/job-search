@@ -1,38 +1,261 @@
 [
-  {"id":"greenhouse","name":"Greenhouse boards curados","url":"https://job-boards.greenhouse.io/","group":"startups_global","access":"automatic"},
-  {"id":"lever","name":"Lever boards curados","url":"https://jobs.lever.co/","group":"startups_global","access":"automatic"},
-  {"id":"ashby","name":"Ashby boards curados","url":"https://jobs.ashbyhq.com/","group":"startups_global","access":"automatic"},
-  {"id":"startups","name":"Startups Argentina","url":"https://www.startupsargentina.com/empleos","group":"startups_ar","access":"automatic"},
-  {"id":"startup_jobs_ar","name":"Startup Jobs Argentina","url":"https://www.startupjobs.ar/","group":"startups_ar","access":"manual"},
-  {"id":"yc","name":"YC Work at a Startup","url":"https://www.workatastartup.com/jobs","group":"startups_global","access":"automatic"},
-  {"id":"speedrun","name":"a16z Speedrun","url":"https://speedrun.a16z.com/jobs","group":"startups_global","access":"automatic"},
-  {"id":"cosign","name":"Cosign","url":"https://cosign.co/jobs","group":"startups_global","access":"automatic"},
-  {"id":"getonbrd","name":"Get on Board","url":"https://www.getonbrd.com/","group":"startups_global","access":"automatic"},
-  {"id":"torre","name":"Torre","url":"https://torre.ai/search/jobs","group":"startups_global","access":"automatic"},
-  {"id":"computrabajo","name":"Computrabajo Argentina","url":"https://ar.computrabajo.com/","group":"local","access":"automatic"},
-  {"id":"becasit","name":"BecasIT","url":"https://becasit.itechcareer.com/pasant%C3%ADas","group":"local","access":"automatic"},
-  {"id":"empleosit","name":"Empleos IT","url":"https://www.empleosit.com.ar/","group":"local","access":"automatic"},
-  {"id":"linkedin","name":"LinkedIn Jobs guest","url":"https://www.linkedin.com/jobs/","group":"local","access":"automatic"},
-  {"id":"uade","name":"Empleos UADE, incl. sin carrera","url":"https://www.empleos.uade.edu.ar/Postulaciones","group":"local","access":"manual"},
-  {"id":"linkedin_posts","name":"LinkedIn publicaciones","url":"https://www.linkedin.com/feed/","group":"local","access":"manual"},
-  {"id":"x","name":"X publicaciones recientes","url":"https://x.com/search","group":"local","access":"manual"},
-  {"id":"bumeran","name":"Bumeran","url":"https://www.bumeran.com.ar/","group":"local","access":"manual"},
-  {"id":"zonajobs","name":"ZonaJobs","url":"https://www.zonajobs.com.ar/","group":"local","access":"manual"},
-  {"id":"indeed","name":"Indeed Argentina","url":"https://ar.indeed.com/","group":"local","access":"manual"},
-  {"id":"jooble","name":"Jooble Argentina","url":"https://ar.jooble.org/","group":"local","access":"manual"},
-  {"id":"firstjob","name":"FirstJob","url":"https://firstjob.me/","group":"local","access":"manual"},
-  {"id":"wellfound","name":"Wellfound","url":"https://wellfound.com/jobs","group":"startups_global","access":"manual"},
-  {"id":"startup_jobs","name":"Startup Jobs","url":"https://startup.jobs/","group":"startups_global","access":"manual"},
-  {"id":"vibe_coding_jobs","name":"Vibe Coding Jobs","url":"https://www.goodvibecode.com/jobs","group":"startups_global","access":"manual"},
-  {"id":"vibehackers","name":"Vibehackers","url":"https://vibehackers.io/jobs","group":"startups_global","access":"manual"},
-  {"id":"remotive","name":"Remotive","url":"https://remotive.com/remote-jobs","group":"remote","access":"automatic"},
-  {"id":"jobicy","name":"Jobicy","url":"https://jobicy.com/jobs","group":"remote","access":"automatic"},
-  {"id":"himalayas","name":"Himalayas","url":"https://himalayas.app/jobs","group":"remote","access":"automatic"},
-  {"id":"arbeitnow","name":"Arbeitnow","url":"https://www.arbeitnow.com/","group":"remote","access":"automatic"},
-  {"id":"outlier","name":"Outlier","url":"https://outlier.ai/","group":"gig","access":"manual"},
-  {"id":"alignerr","name":"Alignerr","url":"https://www.alignerr.com/","group":"gig","access":"manual"},
-  {"id":"dataannotation","name":"DataAnnotation","url":"https://www.dataannotation.tech/","group":"gig","access":"manual"},
-  {"id":"prolific","name":"Prolific","url":"https://www.prolific.com/","group":"gig","access":"manual"},
-  {"id":"yc_events","name":"Y Combinator Events","url":"https://www.ycombinator.com/events","group":"networking","access":"manual"},
-  {"id":"appgentina","name":"Appgentina eventos","url":"https://appgentina.com/","group":"networking","access":"manual"}
+  {
+    "id": "greenhouse",
+    "name": "Greenhouse boards curados",
+    "url": "https://job-boards.greenhouse.io/",
+    "group": "startups_global",
+    "access": "automatic"
+  },
+  {
+    "id": "lever",
+    "name": "Lever boards curados",
+    "url": "https://jobs.lever.co/",
+    "group": "startups_global",
+    "access": "automatic"
+  },
+  {
+    "id": "ashby",
+    "name": "Ashby boards curados",
+    "url": "https://jobs.ashbyhq.com/",
+    "group": "startups_global",
+    "access": "automatic"
+  },
+  {
+    "id": "startups",
+    "name": "Startups Argentina",
+    "url": "https://www.startupsargentina.com/empleos",
+    "group": "startups_ar",
+    "access": "automatic"
+  },
+  {
+    "id": "startup_jobs_ar",
+    "name": "Startup Jobs Argentina",
+    "url": "https://www.startupjobs.ar/",
+    "group": "startups_ar",
+    "access": "manual"
+  },
+  {
+    "id": "yc",
+    "name": "YC Work at a Startup",
+    "url": "https://www.workatastartup.com/jobs",
+    "group": "startups_global",
+    "access": "automatic"
+  },
+  {
+    "id": "speedrun",
+    "name": "a16z Speedrun",
+    "url": "https://speedrun.a16z.com/jobs",
+    "group": "startups_global",
+    "access": "automatic"
+  },
+  {
+    "id": "cosign",
+    "name": "Cosign",
+    "url": "https://cosign.co/jobs",
+    "group": "startups_global",
+    "access": "automatic"
+  },
+  {
+    "id": "getonbrd",
+    "name": "Get on Board",
+    "url": "https://www.getonbrd.com/",
+    "group": "startups_global",
+    "access": "automatic"
+  },
+  {
+    "id": "torre",
+    "name": "Torre",
+    "url": "https://torre.ai/search/jobs",
+    "group": "startups_global",
+    "access": "automatic"
+  },
+  {
+    "id": "computrabajo",
+    "name": "Computrabajo Argentina",
+    "url": "https://ar.computrabajo.com/",
+    "group": "local",
+    "access": "automatic"
+  },
+  {
+    "id": "becasit",
+    "name": "BecasIT",
+    "url": "https://becasit.itechcareer.com/pasant%C3%ADas",
+    "group": "local",
+    "access": "automatic"
+  },
+  {
+    "id": "empleosit",
+    "name": "Empleos IT",
+    "url": "https://www.empleosit.com.ar/",
+    "group": "local",
+    "access": "automatic"
+  },
+  {
+    "id": "linkedin",
+    "name": "LinkedIn Jobs guest",
+    "url": "https://www.linkedin.com/jobs/",
+    "group": "local",
+    "access": "automatic"
+  },
+  {
+    "id": "uade",
+    "name": "Empleos UADE, incl. sin carrera",
+    "url": "https://www.empleos.uade.edu.ar/Postulaciones",
+    "group": "local",
+    "access": "manual"
+  },
+  {
+    "id": "linkedin_posts",
+    "name": "LinkedIn publicaciones",
+    "url": "https://www.linkedin.com/feed/",
+    "group": "local",
+    "access": "manual"
+  },
+  {
+    "id": "x",
+    "name": "X publicaciones recientes",
+    "url": "https://x.com/search",
+    "group": "local",
+    "access": "manual"
+  },
+  {
+    "id": "bumeran",
+    "name": "Bumeran",
+    "url": "https://www.bumeran.com.ar/",
+    "group": "local",
+    "access": "manual"
+  },
+  {
+    "id": "zonajobs",
+    "name": "ZonaJobs",
+    "url": "https://www.zonajobs.com.ar/",
+    "group": "local",
+    "access": "manual"
+  },
+  {
+    "id": "indeed",
+    "name": "Indeed Argentina",
+    "url": "https://ar.indeed.com/",
+    "group": "local",
+    "access": "manual"
+  },
+  {
+    "id": "jooble",
+    "name": "Jooble Argentina",
+    "url": "https://ar.jooble.org/",
+    "group": "local",
+    "access": "manual"
+  },
+  {
+    "id": "firstjob",
+    "name": "FirstJob",
+    "url": "https://firstjob.me/",
+    "group": "local",
+    "access": "manual"
+  },
+  {
+    "id": "wellfound",
+    "name": "Wellfound",
+    "url": "https://wellfound.com/jobs",
+    "group": "startups_global",
+    "access": "manual"
+  },
+  {
+    "id": "startup_jobs",
+    "name": "Startup Jobs",
+    "url": "https://startup.jobs/",
+    "group": "startups_global",
+    "access": "manual"
+  },
+  {
+    "id": "vibe_coding_jobs",
+    "name": "Vibe Coding Jobs",
+    "url": "https://www.goodvibecode.com/jobs",
+    "group": "startups_global",
+    "access": "manual"
+  },
+  {
+    "id": "vibehackers",
+    "name": "Vibehackers",
+    "url": "https://vibehackers.io/jobs",
+    "group": "startups_global",
+    "access": "manual"
+  },
+  {
+    "id": "remotive",
+    "name": "Remotive",
+    "url": "https://remotive.com/remote-jobs",
+    "group": "remote",
+    "access": "automatic"
+  },
+  {
+    "id": "jobicy",
+    "name": "Jobicy",
+    "url": "https://jobicy.com/jobs",
+    "group": "remote",
+    "access": "automatic"
+  },
+  {
+    "id": "himalayas",
+    "name": "Himalayas",
+    "url": "https://himalayas.app/jobs",
+    "group": "remote",
+    "access": "automatic"
+  },
+  {
+    "id": "arbeitnow",
+    "name": "Arbeitnow",
+    "url": "https://www.arbeitnow.com/",
+    "group": "remote",
+    "access": "automatic"
+  },
+  {
+    "id": "outlier",
+    "name": "Outlier",
+    "url": "https://outlier.ai/",
+    "group": "gig",
+    "access": "manual"
+  },
+  {
+    "id": "alignerr",
+    "name": "Alignerr",
+    "url": "https://www.alignerr.com/",
+    "group": "gig",
+    "access": "manual"
+  },
+  {
+    "id": "dataannotation",
+    "name": "DataAnnotation",
+    "url": "https://www.dataannotation.tech/",
+    "group": "gig",
+    "access": "manual"
+  },
+  {
+    "id": "prolific",
+    "name": "Prolific",
+    "url": "https://www.prolific.com/",
+    "group": "gig",
+    "access": "manual"
+  },
+  {
+    "id": "yc_events",
+    "name": "Y Combinator Events",
+    "url": "https://www.ycombinator.com/events",
+    "group": "networking",
+    "access": "manual"
+  },
+  {
+    "id": "appgentina",
+    "name": "Appgentina eventos",
+    "url": "https://appgentina.com/",
+    "group": "networking",
+    "access": "manual"
+  },
+  {
+    "id": "cafedev",
+    "name": "CafeDev — empleos tech remotos",
+    "url": "https://cafedev.co/empleos/?search=%7B%22query%22%3A%22junior%22%7D",
+    "group": "remote",
+    "access": "manual"
+  }
 ]
