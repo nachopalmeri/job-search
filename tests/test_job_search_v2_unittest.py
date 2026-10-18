@@ -2,11 +2,15 @@
 
 import unittest
 from datetime import date
+import json
+import tempfile
+from pathlib import Path
+from unittest.mock import patch
 
-from scripts.cafedev_audit import audit
+from scripts.cafedev_audit import audit, enrich_candidates, fetch_job_detail
 from scripts.opportunity_pipeline import review_route
 from scripts.source_coverage import new_report
-from scripts.source_inventory import MULTIPLE_DAILY, WEEKLY, build_inventory
+from scripts.source_inventory import MULTIPLE_DAILY, WEEKLY, build_inventory, latest_coverage
 from scripts.source_coverage import load_sources
 from scripts.strategic_intelligence import build_report
 from scripts.opportunity_rank import rank
@@ -59,6 +63,19 @@ class SourceInventoryTests(unittest.TestCase):
         for source_id in MULTIPLE_DAILY:
             self.assertEqual(sunday["sources"][source_id]["status"], "pending")
 
+    def test_canonical_daily_coverage_beats_versioned_snapshot_for_same_date(self):
+        with tempfile.TemporaryDirectory() as directory:
+            radar = Path(directory)
+            stale = {"date": "2026-10-18", "sources": {"cafedev": {"status": "partial", "count": 161, "note": "old"}}}
+            fresh = {"date": "2026-10-18", "sources": {"cafedev": {"status": "consulted_with_results", "count": 711, "note": "new"}}}
+            (radar / "coverage-2026-10-18.z-v2.json").write_text(json.dumps(stale), encoding="utf-8")
+            (radar / "coverage-2026-10-18.json").write_text(json.dumps(fresh), encoding="utf-8")
+            with patch("scripts.source_inventory.RADAR", radar):
+                day, sources = latest_coverage()
+            self.assertEqual(day, "2026-10-18")
+            self.assertEqual(sources["cafedev"]["count"], 711)
+            self.assertEqual(sources["cafedev"]["status"], "consulted_with_results")
+
 
 class CafeDevAuditTests(unittest.TestCase):
     def test_missing_date_and_description_remain_unknown_not_incompatible(self):
@@ -77,6 +94,62 @@ class CafeDevAuditTests(unittest.TestCase):
     def test_unrelated_rows_are_not_counted_as_cafedev(self):
         result = audit([{"portal": "lever", "titulo": "Python Intern"}], run_date="2026-10-18")
         self.assertEqual(result["records_audited"], 0)
+
+    def test_detail_enrichment_fetches_full_description_but_keeps_unknown_original_date(self):
+        summary = {
+            "top_potential_candidates": [{"id": "job-1"}],
+            "low_affinity_sample": [],
+        }
+        row = {"portal": "cafedev", "job_id": "job-1", "descripcion": "skills summary"}
+        detail = {
+            "id": "job-1", "title": "Junior QA Engineer", "company_name": "Acme",
+            "description": "Full original detail from the aggregator API" * 20,
+            "published_at": None, "first_seen_at": "2026-10-18 09:00:00",
+            "apply_url": "https://api.cafedev.co/jobs/job-1/apply",
+        }
+        result = enrich_candidates(summary, [row], fetcher=lambda job_id: detail, pause_seconds=0)
+        enriched = result["detail_enrichment"]["records"][0]
+        self.assertEqual(result["detail_enrichment"]["fetched"], 1)
+        self.assertGreater(len(enriched["description"]), 500)
+        self.assertIsNone(enriched["published_at"])
+        self.assertEqual(enriched["first_seen_at"], "2026-10-18 09:00:00")
+        self.assertFalse(enriched["source_posting_url_verified"])
+        self.assertTrue(enriched["apply_url"].startswith("https://api.cafedev.co/"))
+
+    def test_live_enrichment_is_bounded_and_samples_low_affinity_and_long_summaries(self):
+        summary = {
+            "top_potential_candidates": [{"id": f"top-{i}"} for i in range(35)],
+            "low_affinity_sample": [{"id": f"low-{i}"} for i in range(20)],
+        }
+        legacy = [{"portal": "cafedev", "job_id": f"rich-{i}", "descripcion": "x" * 600} for i in range(7)]
+        seen = []
+
+        def fake(job_id):
+            seen.append(job_id)
+            return {"id": job_id, "description": "full text", "published_at": None}
+
+        result = enrich_candidates(summary, legacy, fetcher=fake, pause_seconds=0)
+        self.assertEqual(len(seen), 47)
+        self.assertEqual(result["detail_enrichment"]["requested"], 47)
+        self.assertEqual(result["detail_enrichment"]["fetched"], 47)
+        with self.assertRaises(ValueError):
+            enrich_candidates(summary, legacy, fetcher=fake, detail_limit=31, pause_seconds=0)
+
+    def test_detail_fetcher_validates_id_and_response_provenance(self):
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *args): return False
+            def read(self): return b'{"id":"abc_1","description":"detail"}'
+
+        requested = []
+        def opener(request, timeout):
+            requested.append((request.full_url, timeout))
+            return Response()
+
+        self.assertEqual(fetch_job_detail("abc_1", opener=opener)["description"], "detail")
+        self.assertEqual(requested[0][0], "https://api.cafedev.co/v1/jobs/abc_1")
+        with self.assertRaises(ValueError):
+            fetch_job_detail("../bad", opener=opener)
 
 
 class StrategicIntelligenceTests(unittest.TestCase):

@@ -12,10 +12,10 @@ Toolkit personal para buscar pasantías y roles junior de IT/IA/datos, evaluar a
 python scripts\source_coverage.py --init
 python scripts\buscar_portales.py --scrape all --write
 python scripts\opportunity_pipeline.py
-python scripts\cafedev_audit.py
+python scripts\cafedev_audit.py --enrich-live --detail-limit 30 --low-sample 10
 ```
 
-El scraper consolida fuentes públicas y tableros Greenhouse, Lever y Ashby curados en `scripts/ats_boards.json`. Incluye CafeDev mediante consultas de texto amplias y paginadas con un límite local conservador; `first_seen_at` y `published_at` del agregador no sustituyen la fecha original. `radar/daily-YYYY-MM-DD.tsv` conserva avisos con fecha original verificable dentro de 4 días; `unverified-YYYY-MM-DD.tsv` reúne señales potenciales con fecha, empresa o elegibilidad pendientes. `opportunity_pipeline.py` genera `potential-review-YYYY-MM-DD.json` y `recommendations-YYYY-MM-DD.json` para separar investigación de avisos frescos. `cafedev_audit.py` audita los campos disponibles y etiqueta como desconocidos los requisitos ausentes. LinkedIn corta ante 429. UADE puede incorporarse desde el texto de la sesión abierta con `--uade-text <archivo>`; X requiere revisión manual. Cada aviso de UADE conserva su ID real, sin inventar enlaces individuales.
+El scraper consolida fuentes públicas y tableros Greenhouse, Lever y Ashby curados en `scripts/ats_boards.json`. Incluye CafeDev mediante consultas de texto amplias y paginadas con un límite local conservador; `first_seen_at` es indexación, no fecha de publicación. El listado se enriquece bajo demanda con `GET /v1/jobs/{id}` para hasta 30 candidatos, 10 de baja afinidad y las fichas históricas con resumen largo. Este detalle devuelve descripciones y requisitos, pero no siempre `published_at`, estado abierto/cerrado ni URL fuente directa; su `apply_url` puede seguir siendo un proxy de CafeDev. `radar/daily-YYYY-MM-DD.tsv` conserva avisos con fecha original verificable dentro de 4 días; `unverified-YYYY-MM-DD.tsv` reúne señales potenciales con fecha, empresa o elegibilidad pendientes. `opportunity_pipeline.py` genera `potential-review-YYYY-MM-DD.json` y `recommendations-YYYY-MM-DD.json` para separar investigación de avisos frescos. LinkedIn corta ante 429. UADE puede incorporarse desde el texto de la sesión abierta con `--uade-text <archivo>`; X requiere revisión manual. Cada aviso de UADE conserva su ID real, sin inventar enlaces individuales.
 
 ```powershell
 python scripts\buscar_portales.py --scrape all --write --uade-text <archivo-de-texto>

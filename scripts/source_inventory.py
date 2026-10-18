@@ -68,18 +68,24 @@ def cadence(source_id: str) -> str:
     return "Diaria"
 
 
-def latest_coverage() -> tuple[str, dict]:
+def _coverage_reports() -> list[tuple[date, bool, Path, dict]]:
     reports = []
     for path in RADAR.glob("coverage-*.json"):
         try:
             day = date.fromisoformat(path.stem.removeprefix("coverage-")[:10])
-            reports.append((day, path, json.loads(path.read_text(encoding="utf-8"))))
+            canonical = path.name == f"coverage-{day.isoformat()}.json"
+            reports.append((day, canonical, path, json.loads(path.read_text(encoding="utf-8"))))
         except (ValueError, OSError, json.JSONDecodeError):
             continue
+    return sorted(reports, key=lambda item: (item[0], item[1], item[2].name), reverse=True)
+
+
+def latest_coverage() -> tuple[str, dict]:
+    reports = _coverage_reports()
     if not reports:
         return "", {}
-    reports.sort(key=lambda item: (item[0], item[1].name), reverse=True)
-    return reports[0][0].isoformat(), reports[0][2].get("sources", {})
+    day, _, _, payload = reports[0]
+    return day.isoformat(), payload.get("sources", {})
 
 
 def build_inventory(sources: list[dict]) -> dict:
@@ -90,16 +96,12 @@ def build_inventory(sources: list[dict]) -> dict:
         attempt = latest.get(sid, {"status": "not recorded", "count": 0, "note": ""})
         previous_success = ""
         previous_count = None
-        for path in sorted(RADAR.glob("coverage-*.json"), reverse=True):
-            try:
-                report = json.loads(path.read_text(encoding="utf-8"))
-                item = report.get("sources", {}).get(sid, {})
-                if item.get("status") in SUCCESS:
-                    previous_success = report.get("date", "")
-                    previous_count = item.get("count", 0)
-                    break
-            except (OSError, json.JSONDecodeError):
-                continue
+        for historical_day, _, _, report in _coverage_reports():
+            item = report.get("sources", {}).get(sid, {})
+            if item.get("status") in SUCCESS:
+                previous_success = report.get("date", historical_day.isoformat())
+                previous_count = item.get("count", 0)
+                break
         rows.append({
             **source,
             "type": TYPE_BY_GROUP.get(source.get("group", ""), "Other"),
