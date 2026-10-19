@@ -48,8 +48,20 @@ class SourceInventoryTests(unittest.TestCase):
         for row in inventory["sources"]:
             self.assertTrue(row["method"])
             self.assertTrue(row["frequency"])
-        self.assertTrue(any(row["id"] == "cafedev" and row["last_attempt_count"] == 711 for row in inventory["sources"]))
         self.assertTrue(any(row["id"] == "silver_dev" and row["frequency"] == "Diaria" for row in inventory["sources"]))
+
+    def test_inventory_uses_cafedev_count_from_available_coverage_report(self):
+        with tempfile.TemporaryDirectory() as directory:
+            radar = Path(directory)
+            report = {"date": "2026-10-19", "sources": {
+                "cafedev": {"status": "consulted_with_results", "count": 696, "note": "fixture"}
+            }}
+            (radar / "coverage-2026-10-19.json").write_text(json.dumps(report), encoding="utf-8")
+            with patch("scripts.source_inventory.RADAR", radar):
+                inventory = build_inventory(load_sources())
+        cafedev = next(row for row in inventory["sources"] if row["id"] == "cafedev")
+        self.assertEqual(cafedev["last_attempt_date"], "2026-10-19")
+        self.assertEqual(cafedev["last_attempt_count"], 696)
 
     def test_weekly_sources_are_deferred_on_sunday_but_due_on_monday(self):
         sources = load_sources()

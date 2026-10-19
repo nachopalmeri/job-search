@@ -37,7 +37,7 @@ METHODS = {
     "firstjob": "Portal web; revisión manual",
     "startup_jobs": "Portal web; revisión manual",
     "vibe_coding_jobs": "Portal/comunidad web; revisión manual",
-    "vibehackers": "Portal/comunidad web; revisión manual",
+    "vibehackers": "Listado web + RSS oficial /jobs-feed.xml (últimos 50 ítems); verificar vacante original",
     "yc_events": "Calendario web público; revisión manual",
     "appgentina": "Sitio de comunidad/eventos; revisión manual",
 }

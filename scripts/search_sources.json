@@ -185,6 +185,7 @@
     "id": "vibehackers",
     "name": "Vibehackers",
     "url": "https://vibehackers.io/jobs",
+    "feed_url": "https://vibehackers.io/jobs-feed.xml",
     "group": "startups_global",
     "access": "manual"
   },

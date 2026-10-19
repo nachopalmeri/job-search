@@ -94,7 +94,7 @@ def test_cafedev_uses_stable_ids_preserves_apply_link_and_never_promotes_index_d
     monkeypatch.setattr(search, "_get_json_with_retry", fake)
     jobs = search.scrape_cafedev()
 
-    assert len(calls) == 2
+    assert len(calls) == 16  # broad catalog plus 15 entry-level query families
     assert [job["job_id"] for job in jobs] == ["latam-1", "unknown-1"]
     assert jobs[0]["ubicacion"] == "Bogotá, Colombia (acepta Argentina)"
     assert jobs[0]["apply_url"] == "https://jobs.lever.co/acme/1"

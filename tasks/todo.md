@@ -1,3 +1,17 @@
+# Búsqueda laboral + cobertura del repo — estado 19/10/2026
+
+## Hecho en esta continuación
+- Ajustado el checklist para registrar `attempted/total`; `--check` detecta explícitamente una fuente incompleta aunque haya señales.
+- Ampliado Wellfound a `https://wellfound.com/location/argentina`; agregado al catálogo el RSS oficial de Vibehackers (`https://vibehackers.io/jobs-feed.xml`, últimos 50 ítems).
+- Actualizadas las indicaciones de `AGENTS.md`: diferencian señales de avisos verificados, detalle de muestreo CafeDev, cobertura por consultas/páginas y bloqueo de OpenCode.
+- Suite completa: 69 tests OK en el clon limpio; `compileall` y `git diff --check` OK.
+- Notion: corregido el resumen del 19/10. Estado honesto: 38 fuentes, 1.872 señales por fuente, 2 parciales (LinkedIn Jobs 7/31; LinkedIn Posts 1/5) y Torre bloqueada. La pasada no es completa.
+
+## Bloqueos / siguiente acción
+- El wrapper `C:\Users\Nacho\.agents\bin\invoke-delegation.ps1` no existe en este entorno; no se usó OpenCode global ni se afirmó delegación.
+- El checkout original presenta objetos faltantes y refs remotas inválidas (`git fsck`); ambos fetch fallaron. Se preservó intacto y se preparó esta rama desde un clon limpio de `master` en `C:\Users\nacho\Downloads\job-search-repair-20261019`; falta integrar y pushear el cambio, sin force-push.
+- Mantener pendientes LinkedIn 24 familias, LinkedIn Posts 4 consultas y Torre hasta que exista un acceso verificable.
+
 # Búsqueda laboral — estado 14/10/2026
 
 ## Hecho en esta pasada

@@ -37,7 +37,7 @@ BASE_LINKS = {
     "google": "https://www.google.com/search?ibp=htl;jobs&q={kw}+pasantia+IT+Argentina",
     "uade": "https://www.empleos.uade.edu.ar/Postulaciones",
     "firstjob": "https://www.firstjob.com",
-    "wellfound": "https://wellfound.com/role/l/intern/Argentina",
+    "wellfound": "https://wellfound.com/location/argentina",
     "getonbrd": "https://www.getonbrd.com/empleos/programacion?per_page=20&search={kw}",
     "torre": "https://torre.ai/search/jobs?q={kw}",
     "cosign": "https://cosign.co/jobs",

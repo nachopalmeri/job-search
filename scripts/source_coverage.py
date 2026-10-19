@@ -56,7 +56,7 @@ def new_report(day, sources):
     }
 
 
-def mark_source(report, source_id, status, count=0, note=""):
+def mark_source(report, source_id, status, count=0, note="", attempted=None, total=None):
     if source_id not in report["sources"]:
         raise ValueError(f"Fuente desconocida: {source_id}")
     if status not in STATUSES or status == "pending":
@@ -69,11 +69,38 @@ def mark_source(report, source_id, status, count=0, note=""):
         raise ValueError("Solo consulted_with_results o partial admiten count > 0")
     if status in {"partial", "blocked", "not_applicable"} and not note.strip():
         raise ValueError("Un resultado parcial, bloqueo o exclusión requiere motivo")
-    report["sources"][source_id] = {"status": status, "count": count, "note": note.strip()}
+    if (attempted is None) != (total is None):
+        raise ValueError("La cobertura requiere --attempted y --total juntos")
+    entry = {"status": status, "count": count, "note": note.strip()}
+    if attempted is not None:
+        if attempted < 0 or total < 1 or attempted > total:
+            raise ValueError("La cobertura debe cumplir 0 <= attempted <= total y total >= 1")
+        if attempted < total and status != "partial":
+            raise ValueError("La cobertura incompleta requiere status=partial")
+        entry["coverage"] = {"attempted": attempted, "total": total}
+    report["sources"][source_id] = entry
 
 
 def pending_sources(report):
     return [source_id for source_id, item in report["sources"].items() if item["status"] == "pending"]
+
+
+def incomplete_sources(report):
+    """Return entries whose explicit attempted/total coverage is incomplete or malformed."""
+    incomplete = []
+    for source_id, item in report["sources"].items():
+        coverage = item.get("coverage")
+        if coverage is None:
+            continue  # Legacy reports have no query/page denominator.
+        if not isinstance(coverage, dict):
+            incomplete.append(source_id)
+            continue
+        attempted, total = coverage.get("attempted"), coverage.get("total")
+        if (not isinstance(attempted, int) or isinstance(attempted, bool)
+                or not isinstance(total, int) or isinstance(total, bool)
+                or attempted < 0 or total < 1 or attempted > total or attempted < total):
+            incomplete.append(source_id)
+    return incomplete
 
 
 def main():
@@ -87,6 +114,8 @@ def main():
     parser.add_argument("--status", choices=sorted(STATUSES - {"pending"}))
     parser.add_argument("--count", type=int, default=0)
     parser.add_argument("--note", default="")
+    parser.add_argument("--attempted", type=int, help="familias/páginas consultadas dentro del total declarado")
+    parser.add_argument("--total", type=int, help="total conocido de familias/páginas para esta consulta")
     args = parser.parse_args()
     output = args.out or ROOT / "radar" / f"coverage-{args.date}.json"
     sources = load_sources()
@@ -118,7 +147,8 @@ def main():
         if not args.status:
             parser.error("--mark requiere --status")
         try:
-            mark_source(report, args.mark, args.status, args.count, args.note)
+            mark_source(report, args.mark, args.status, args.count, args.note,
+                        args.attempted, args.total)
         except ValueError as exc:
             parser.error(str(exc))
         output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -130,16 +160,19 @@ def main():
     partial = [source_id for source_id, item in report["sources"].items() if item["status"] == "partial"]
     blocked = [source_id for source_id, item in report["sources"].items() if item["status"] == "blocked"]
     not_due = [source_id for source_id, item in report["sources"].items() if item["status"] == "not_due"]
+    incomplete = incomplete_sources(report)
     results = sum(item["count"] for item in report["sources"].values())
-    print(f"Fuentes: {len(report['sources'])}; resultados: {results}; pendientes: {len(pending)}; no programadas hoy: {len(not_due)}; parciales: {len(partial)}; bloqueadas: {len(blocked)}")
+    print(f"Fuentes: {len(report['sources'])}; señales: {results}; pendientes: {len(pending)}; no programadas hoy: {len(not_due)}; parciales: {len(partial)}; cobertura incompleta: {len(incomplete)}; bloqueadas: {len(blocked)}")
     if pending:
         print("Pendientes: " + ", ".join(pending))
     if blocked:
         print("Bloqueadas: " + ", ".join(blocked))
     if partial:
         print("Parciales: " + ", ".join(partial))
+    if incomplete:
+        print("Cobertura incompleta: " + ", ".join(incomplete))
     write_inventory()
-    return 1 if pending or blocked or partial else 0
+    return 1 if pending or blocked or partial or incomplete else 0
 
 
 if __name__ == "__main__":
