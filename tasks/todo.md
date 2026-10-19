@@ -9,7 +9,7 @@
 
 ## Bloqueos / siguiente acción
 - El wrapper `C:\Users\Nacho\.agents\bin\invoke-delegation.ps1` no existe en este entorno; no se usó OpenCode global ni se afirmó delegación.
-- El checkout original presenta objetos faltantes y refs remotas inválidas (`git fsck`); ambos fetch fallaron. Se preservó intacto y se preparó esta rama desde un clon limpio de `master` en `C:\Users\nacho\Downloads\job-search-repair-20261019`; falta integrar y pushear el cambio, sin force-push.
+- El checkout original presenta objetos faltantes y refs remotas inválidas (`git fsck`); ambos fetch fallaron. Se preservó intacto. Los cambios se probaron en un clon limpio (`C:\Users\nacho\Downloads\job-search-repair-20261019`), se integraron con fast-forward a `master` y se pushearon sin force-push (commit `7b67d8a`). Usar el clon limpio para continuar hasta recuperar con seguridad el checkout original.
 - Mantener pendientes LinkedIn 24 familias, LinkedIn Posts 4 consultas y Torre hasta que exista un acceso verificable.
 
 # Búsqueda laboral — estado 14/10/2026
